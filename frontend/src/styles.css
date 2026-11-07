@@ -74,6 +74,13 @@ h1 {
   margin-top: 0.5rem;
 }
 
+.feature-notice {
+  padding: 0.9rem 1rem;
+  color: #515a70;
+  background: #f5f6fc;
+  border-radius: 0.5rem;
+}
+
 button {
   padding: 0.7rem 1rem;
   color: #fff;
@@ -87,4 +94,3 @@ button {
 button:hover {
   background: #4940b2;
 }
-

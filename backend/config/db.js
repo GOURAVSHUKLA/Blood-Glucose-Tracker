@@ -1,11 +1,20 @@
-import mongoose from "mongoose";
+import pg from "pg";
 
-export async function connectDatabase(uri) {
-  if (!uri) {
-    throw new Error("MONGO_URI is required to connect to the database");
-  }
+const { Pool } = pg;
 
-  await mongoose.connect(uri);
-  console.log("Connected to MongoDB");
-}
+export const pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+});
 
+export const connectDatabase = async () => {
+    try {
+        const result = await pool.query("SELECT NOW()");
+
+        console.log("PostgreSQL connected successfully!");
+        console.log("Database time:", result.rows[0].now);
+
+    } catch (error) {
+        console.error("PostgreSQL connection error:", error);
+        throw error;
+    }
+};

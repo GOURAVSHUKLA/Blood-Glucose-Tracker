@@ -1,4 +1,5 @@
 import { apiRequest } from "../services/api.js";
+import FeatureNotice from "../components/FeatureNotice.jsx";
 
 export default function Dashboard() {
   async function checkApi() {
@@ -14,9 +15,10 @@ export default function Dashboard() {
     <section className="card">
       <p className="eyebrow">Your health overview</p>
       <h1>Dashboard</h1>
-      <p>Glucose readings and reports will appear here once those API features are implemented.</p>
+      <FeatureNotice>
+        Glucose readings and reports will appear here once those API features are implemented.
+      </FeatureNotice>
       <button type="button" onClick={checkApi}>Check API connection</button>
     </section>
   );
 }
-

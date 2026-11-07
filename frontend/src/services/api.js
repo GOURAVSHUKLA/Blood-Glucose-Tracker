@@ -1,19 +1,31 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
+import axios from "axios";
 
-export async function apiRequest(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || "/api",
+  headers: {
+    Accept: "application/json",
+  },
+});
 
-  const result = await response.json().catch(() => null);
-  if (!response.ok) {
-    throw new Error(result?.error || `Request failed with status ${response.status}`);
-  }
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject(error);
+    }
 
-  return result;
+    const serverMessage = error.response?.data?.error ?? error.response?.data?.message;
+    if (typeof serverMessage === "string" && serverMessage.trim()) {
+      error.message = serverMessage;
+    }
+
+    return Promise.reject(error);
+  },
+);
+
+export async function apiRequest(path, config = {}) {
+  const response = await api.request({ url: path, ...config });
+  return response.data;
 }
 
+export default api;

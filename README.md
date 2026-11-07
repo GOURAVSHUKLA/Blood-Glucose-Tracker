@@ -19,8 +19,12 @@ cd backend && npm install
 cd ../frontend && npm install
 ```
 
-Copy `backend/.env.example` to `backend/.env` and set values as needed. Start
-the API and frontend in separate terminals:
+Copy `backend/.env.example` to `backend/.env` and set values as needed. To
+configure the frontend API URL, copy `frontend/.env.example` to `frontend/.env`.
+The example points directly to the local API; without this file, the frontend
+uses `/api` through the Vite development proxy. `VITE_API_URL` is public
+frontend configuration, not a place for secrets. Start the API and frontend in
+separate terminals:
 
 ```sh
 cd backend && npm run dev
@@ -42,4 +46,3 @@ The backend includes the base health endpoint, protected auth and reading
 routes, and a PostgreSQL-ready schema for users and blood glucose readings.
 
 Run backend tests with `cd backend && npm test`.
-

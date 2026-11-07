@@ -3,6 +3,34 @@ import { Link } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import FeatureNotice from "../components/FeatureNotice.jsx";
+import { apiRequest } from "../services/api.js";
+
+function getSignupErrorMessage(error) {
+  const statusCode = error?.response?.status;
+  const serverMessage = error?.response?.data?.error ?? error?.response?.data?.message;
+
+  if (statusCode === 409) {
+    return serverMessage || "An account with this email already exists.";
+  }
+
+  if (statusCode === 400) {
+    return serverMessage || "Please check your registration details and try again.";
+  }
+
+  if (statusCode === 503) {
+    return serverMessage || "The registration service is not configured yet.";
+  }
+
+  if (typeof statusCode === "number" && statusCode >= 500) {
+    return serverMessage || "The server could not create your account. Please try again.";
+  }
+
+  if (!error?.response) {
+    return "Could not reach the server. Check that the backend is running and try again.";
+  }
+
+  return serverMessage || error.message || "Registration failed. Please try again.";
+}
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -15,6 +43,7 @@ export default function Signup() {
   const [showPasswords, setShowPasswords] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [status, setStatus] = useState("");
+  const [submitError, setSubmitError] = useState("");
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -25,6 +54,7 @@ export default function Signup() {
       ...(name === "password" ? { confirmPassword: "" } : {}),
     }));
     setStatus("");
+    setSubmitError("");
   }
 
   function validateForm() {
@@ -34,16 +64,24 @@ export default function Signup() {
 
     if (!fullName) {
       nextErrors.fullName = "Full name is required.";
+    } else if (fullName.length < 2) {
+      nextErrors.fullName = "Full name must be at least 2 characters.";
+    } else if (fullName.length > 100) {
+      nextErrors.fullName = "Full name must be 100 characters or fewer.";
     }
 
     if (!email) {
       nextErrors.email = "Email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       nextErrors.email = "Enter a valid email address.";
+    } else if (email.length > 255) {
+      nextErrors.email = "Email must be 255 characters or fewer.";
     }
 
     if (!form.password) {
       nextErrors.password = "Password is required.";
+    } else if (form.password.length < 8) {
+      nextErrors.password = "Password must be at least 8 characters.";
     }
 
     if (!form.confirmPassword) {
@@ -60,6 +98,7 @@ export default function Signup() {
     const nextErrors = validateForm();
     setErrors(nextErrors);
     setStatus("");
+    setSubmitError("");
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -67,8 +106,20 @@ export default function Signup() {
 
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 400));
-      setStatus("Your details are valid. Signup will be connected to the backend in a later step.");
+      const result = await apiRequest("/auth/register", {
+        method: "POST",
+        data: {
+          name: form.fullName.trim(),
+          email: form.email.trim(),
+          password: form.password,
+        },
+      });
+
+      setStatus(result.message || "Your account was created. You can now log in.");
+      setForm({ fullName: "", email: "", password: "", confirmPassword: "" });
+      setErrors({});
+    } catch (error) {
+      setSubmitError(getSignupErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -79,7 +130,7 @@ export default function Signup() {
       <p className="eyebrow">Get started</p>
       <h1>Create your Sweety account</h1>
       <FeatureNotice>
-        This form currently validates your details locally. Backend signup will be added in Step 7.
+        Your confirmation password is used only for validation and is not sent to the backend.
       </FeatureNotice>
 
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
@@ -92,6 +143,7 @@ export default function Signup() {
             onChange={handleChange}
             aria-describedby={errors.fullName ? "fullName-error" : undefined}
             aria-invalid={Boolean(errors.fullName)}
+            maxLength={100}
             type="text"
             value={form.fullName}
           />
@@ -107,6 +159,7 @@ export default function Signup() {
             onChange={handleChange}
             aria-describedby={errors.email ? "email-error" : undefined}
             aria-invalid={Boolean(errors.email)}
+            maxLength={255}
             type="email"
             value={form.email}
           />
@@ -122,6 +175,7 @@ export default function Signup() {
             onChange={handleChange}
             aria-describedby={errors.password ? "password-error" : undefined}
             aria-invalid={Boolean(errors.password)}
+            minLength={8}
             type={showPasswords ? "text" : "password"}
             value={form.password}
           />
@@ -138,6 +192,7 @@ export default function Signup() {
               onChange={handleChange}
               aria-describedby={errors.confirmPassword ? "confirmPassword-error" : undefined}
               aria-invalid={Boolean(errors.confirmPassword)}
+              minLength={8}
               type={showPasswords ? "text" : "password"}
               value={form.confirmPassword}
             />
@@ -160,6 +215,7 @@ export default function Signup() {
           {isSubmitting ? "Creating account..." : "Create account"}
         </Button>
 
+        {submitError && <p className="form-error" role="alert">{submitError}</p>}
         {status && <p className="form-message" role="status">{status}</p>}
       </form>
 

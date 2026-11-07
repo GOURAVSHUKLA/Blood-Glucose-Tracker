@@ -212,6 +212,15 @@ h1 {
   font-size: 0.9rem;
 }
 
+.form-error {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  color: #b42318;
+  font-size: 0.9rem;
+  background: #fef3f2;
+  border-radius: var(--radius-control);
+}
+
 .auth-submit {
   width: 100%;
   margin-top: 0.25rem;

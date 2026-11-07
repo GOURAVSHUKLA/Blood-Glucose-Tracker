@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
 import { apiRequest } from "../services/api.js";
@@ -47,52 +47,22 @@ function getReadingErrorMessage(error) {
   return error?.message || "Unable to save this reading.";
 }
 
-export default function ReadingForm() {
+export default function ReadingForm({
+  readings,
+  isLoadingReadings,
+  loadError,
+  onReadingCreated,
+}) {
   const today = getLocalDateValue();
   const [form, setForm] = useState({
     readingDate: today,
     timeSlot: "",
     value: "",
   });
-  const [readings, setReadings] = useState([]);
   const [errors, setErrors] = useState({});
-  const [isLoadingReadings, setIsLoadingReadings] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [loadError, setLoadError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [status, setStatus] = useState("");
-  const [reloadKey, setReloadKey] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadReadings() {
-      setIsLoadingReadings(true);
-      setLoadError("");
-      try {
-        const result = await apiRequest("/readings");
-        if (!Array.isArray(result)) {
-          throw new Error("The API returned an unexpected readings response.");
-        }
-        if (isMounted) {
-          setReadings(result);
-        }
-      } catch (error) {
-        if (isMounted) {
-          setLoadError(error.message || "Unable to check existing readings.");
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingReadings(false);
-        }
-      }
-    }
-
-    loadReadings();
-    return () => {
-      isMounted = false;
-    };
-  }, [reloadKey]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -176,7 +146,7 @@ export default function ReadingForm() {
         throw new Error("The server response did not include the saved reading.");
       }
 
-      setReadings((currentReadings) => [result.reading, ...currentReadings]);
+      onReadingCreated(result.reading);
       setStatus(result.message || "Reading saved successfully.");
       setForm((currentForm) => ({ ...currentForm, value: "" }));
     } catch (error) {
@@ -200,12 +170,9 @@ export default function ReadingForm() {
       </div>
 
       {loadError ? (
-        <div className="form-error" role="alert">
-          <p>{loadError}</p>
-          <Button onClick={() => setReloadKey((key) => key + 1)} type="button">
-            Retry loading readings
-          </Button>
-        </div>
+        <p className="reading-count" role="status">
+          Existing readings could not be checked. Retry loading the table before saving.
+        </p>
       ) : (
         <p className="reading-count" role="status">
           {isLoadingReadings

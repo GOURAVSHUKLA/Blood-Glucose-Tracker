@@ -46,3 +46,13 @@ The backend includes the base health endpoint, protected auth and reading
 routes, and a PostgreSQL-ready schema for users and blood glucose readings.
 
 Run backend tests with `cd backend && npm test`.
+
+When updating an existing database to support separate morning and after-breakfast
+readings, export `DATABASE_URL` in your shell and run this migration once from the
+repository root:
+
+```sh
+psql "$DATABASE_URL" -f backend/database/migrations/001_add_after_breakfast_time_slot.sql
+```
+
+New databases created from either schema file already include the updated slot.

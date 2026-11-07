@@ -3,7 +3,7 @@ import { pool } from "../config/db.js";
 const TIME_SLOT_ALIASES = new Map([
   ["morning", "morning"],
   ["before_breakfast", "morning"],
-  ["after_breakfast", "morning"],
+  ["after_breakfast", "after_breakfast"],
   ["afternoon", "afternoon"],
   ["lunch", "afternoon"],
   ["before_lunch", "afternoon"],
@@ -15,6 +15,10 @@ const TIME_SLOT_ALIASES = new Map([
   ["bedtime", "bedtime"],
   ["night", "bedtime"]
 ]);
+
+export function normalizeTimeSlot(timeSlot) {
+  return TIME_SLOT_ALIASES.get(String(timeSlot).trim().toLowerCase());
+}
 
 export async function listReadings(req, res) {
   if (!process.env.DATABASE_URL) {
@@ -44,11 +48,11 @@ export async function createReading(req, res) {
     return res.status(400).json({ error: "reading_date, time_slot, and value are required" });
   }
 
-  const normalizedTimeSlot = TIME_SLOT_ALIASES.get(String(time_slot).trim().toLowerCase());
+  const normalizedTimeSlot = normalizeTimeSlot(time_slot);
 
   if (!normalizedTimeSlot) {
     return res.status(400).json({
-      error: "Invalid time_slot. Use morning, afternoon, evening, or bedtime"
+      error: "Invalid time_slot. Use morning, after_breakfast, afternoon, evening, or bedtime"
     });
   }
 
@@ -83,4 +87,3 @@ export async function createReading(req, res) {
     return res.status(500).json({ error: "Unable to save reading" });
   }
 }
-

@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS readings (
   id SERIAL PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   reading_date DATE NOT NULL,
-  time_slot VARCHAR(20) NOT NULL CHECK (time_slot IN ('morning', 'afternoon', 'evening', 'bedtime')),
+  time_slot VARCHAR(20) NOT NULL CHECK (time_slot IN ('morning', 'after_breakfast', 'afternoon', 'evening', 'bedtime')),
   value INTEGER NOT NULL CHECK (value BETWEEN 40 AND 600),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, reading_date, time_slot)

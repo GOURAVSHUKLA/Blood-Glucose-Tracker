@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "./Button.jsx";
 import Card from "./Card.jsx";
 import { apiRequest } from "../services/api.js";
@@ -15,6 +15,15 @@ const CANONICAL_TIME_SLOTS = {
   after_breakfast: "after_breakfast",
   after_lunch: "afternoon",
   after_dinner: "evening",
+  bedtime: "bedtime",
+};
+
+const FORM_TIME_SLOTS = {
+  morning: "morning",
+  after_breakfast: "after_breakfast",
+  afternoon: "after_lunch",
+  evening: "after_dinner",
+  bedtime: "bedtime",
 };
 
 function getLocalDateValue(date = new Date()) {
@@ -48,10 +57,13 @@ function getReadingErrorMessage(error) {
 }
 
 export default function ReadingForm({
+  editingReading,
   readings,
   isLoadingReadings,
   loadError,
+  onCancelEdit,
   onReadingCreated,
+  onReadingUpdated,
 }) {
   const today = getLocalDateValue();
   const [form, setForm] = useState({
@@ -63,6 +75,19 @@ export default function ReadingForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    setForm(editingReading
+      ? {
+          readingDate: String(editingReading.reading_date).slice(0, 10),
+          timeSlot: FORM_TIME_SLOTS[editingReading.time_slot] || "",
+          value: String(editingReading.value),
+        }
+      : { readingDate: today, timeSlot: "", value: "" });
+    setErrors({});
+    setSubmitError("");
+    setStatus("");
+  }, [editingReading, today]);
 
   function handleChange(event) {
     const { name, value } = event.target;
@@ -101,7 +126,10 @@ export default function ReadingForm({
       !nextErrors.readingDate
     ) {
       const readingsForDate = readings.filter(
-        (reading) => String(reading.reading_date).slice(0, 10) === form.readingDate,
+        (reading) => (
+          reading.id !== editingReading?.id &&
+          String(reading.reading_date).slice(0, 10) === form.readingDate
+        ),
       );
 
       if (readingsForDate.length >= 4) {
@@ -133,22 +161,31 @@ export default function ReadingForm({
 
     setIsSubmitting(true);
     try {
-      const result = await apiRequest("/readings", {
-        method: "POST",
-        data: {
-          reading_date: form.readingDate,
-          time_slot: form.timeSlot,
-          value: Number(form.value),
+      const result = await apiRequest(
+        editingReading
+          ? `/readings/${encodeURIComponent(editingReading.id)}`
+          : "/readings",
+        {
+          method: editingReading ? "PUT" : "POST",
+          data: {
+            reading_date: form.readingDate,
+            time_slot: form.timeSlot,
+            value: Number(form.value),
+          },
         },
-      });
+      );
 
       if (!result?.reading) {
-        throw new Error("The server response did not include the saved reading.");
+        throw new Error(`The server response did not include the ${editingReading ? "updated" : "saved"} reading.`);
       }
 
-      onReadingCreated(result.reading);
-      setStatus(result.message || "Reading saved successfully.");
-      setForm((currentForm) => ({ ...currentForm, value: "" }));
+      if (editingReading) {
+        onReadingUpdated(result.reading, result.message || "Reading updated successfully.");
+      } else {
+        onReadingCreated(result.reading);
+        setStatus(result.message || "Reading saved successfully.");
+        setForm((currentForm) => ({ ...currentForm, value: "" }));
+      }
     } catch (error) {
       setSubmitError(getReadingErrorMessage(error));
     } finally {
@@ -160,12 +197,15 @@ export default function ReadingForm({
     (reading) => String(reading.reading_date).slice(0, 10) === form.readingDate,
   );
   const isBusy = isLoadingReadings || isSubmitting;
+  const availableTimeSlots = editingReading?.time_slot === "bedtime"
+    ? [...TIME_SLOTS, { value: "bedtime", label: "Bedtime" }]
+    : TIME_SLOTS;
 
   return (
     <Card className="reading-form-card">
       <div className="reading-form-heading">
         <p className="eyebrow">Daily tracking</p>
-        <h2>Add a glucose reading</h2>
+        <h2>{editingReading ? "Edit glucose reading" : "Add a glucose reading"}</h2>
         <p>Record a value between 40 and 600 mg/dL.</p>
       </div>
 
@@ -210,7 +250,7 @@ export default function ReadingForm({
             value={form.timeSlot}
           >
             <option value="">Choose a time slot</option>
-            {TIME_SLOTS.map((slot) => (
+            {availableTimeSlots.map((slot) => (
               <option key={slot.value} value={slot.value}>{slot.label}</option>
             ))}
           </select>
@@ -234,9 +274,18 @@ export default function ReadingForm({
           {errors.value && <p className="field-error" id="value-error">{errors.value}</p>}
         </div>
 
-        <Button className="auth-submit" disabled={isBusy || Boolean(loadError)} type="submit">
-          {isSubmitting ? "Saving reading..." : "Save reading"}
-        </Button>
+        <div className={`reading-form-actions${editingReading ? " is-editing" : ""}`}>
+          <Button className="auth-submit" disabled={isBusy || Boolean(loadError)} type="submit">
+            {isSubmitting
+              ? (editingReading ? "Updating reading..." : "Saving reading...")
+              : (editingReading ? "Save changes" : "Save reading")}
+          </Button>
+          {editingReading && (
+            <Button disabled={isSubmitting} onClick={onCancelEdit} type="button">
+              Cancel
+            </Button>
+          )}
+        </div>
 
         {submitError && <p className="form-error" role="alert">{submitError}</p>}
         {status && <p className="form-message" role="status">{status}</p>}

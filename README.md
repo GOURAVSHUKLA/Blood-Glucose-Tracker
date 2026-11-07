@@ -39,11 +39,13 @@ The API listens on `http://localhost:5000` by default and exposes
 
 - `GET /api/health`
 - `POST /api/auth/signup` and `POST /api/auth/login`
-- `GET /api/readings` and `POST /api/readings`
+- `GET /api/readings`, `POST /api/readings`, `PUT /api/readings/:id`, and `DELETE /api/readings/:id`
 - `GET /api/reports`
 
-The backend includes the base health endpoint, protected auth and reading
-routes, and a PostgreSQL-ready schema for users and blood glucose readings.
+Reading routes require authentication and only allow users to update or delete
+their own readings. The backend includes the base health endpoint, protected
+auth and reading routes, and a PostgreSQL-ready schema for users and blood
+glucose readings.
 
 Run backend tests with `cd backend && npm test`.
 

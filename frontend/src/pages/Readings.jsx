@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ReadingForm from "../components/ReadingForm.jsx";
 import ReadingTable from "../components/ReadingTable.jsx";
 import { apiRequest } from "../services/api.js";
@@ -21,6 +21,11 @@ export default function Readings() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [editingReading, setEditingReading] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [actionError, setActionError] = useState("");
+  const [actionStatus, setActionStatus] = useState("");
+  const readingFormRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,6 +58,12 @@ export default function Readings() {
     };
   }, [reloadKey]);
 
+  useEffect(() => {
+    if (editingReading) {
+      readingFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [editingReading]);
+
   const filteredReadings = useMemo(
     () => filterDate
       ? readings.filter((reading) => String(reading.reading_date).slice(0, 10) === filterDate)
@@ -62,6 +73,50 @@ export default function Readings() {
 
   function handleReadingCreated(reading) {
     setReadings((currentReadings) => sortReadings([...currentReadings, reading]));
+  }
+
+  function handleReadingUpdated(reading, message) {
+    setReadings((currentReadings) => sortReadings(
+      currentReadings.map((currentReading) => (
+        currentReading.id === reading.id ? reading : currentReading
+      )),
+    ));
+    setEditingReading(null);
+    setActionError("");
+    setActionStatus(message);
+  }
+
+  async function handleReadingDeleted(reading) {
+    const confirmed = window.confirm(
+      `Delete the ${reading.value} mg/dL reading from ${String(reading.reading_date).slice(0, 10)}? This cannot be undone.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingId(reading.id);
+    setActionError("");
+    setActionStatus("");
+    try {
+      const result = await apiRequest(`/readings/${encodeURIComponent(reading.id)}`, {
+        method: "DELETE",
+      });
+      if (!result?.message) {
+        throw new Error("The server did not confirm that the reading was deleted.");
+      }
+
+      setReadings((currentReadings) => currentReadings.filter(
+        (currentReading) => currentReading.id !== reading.id,
+      ));
+      setEditingReading((currentReading) => (
+        currentReading?.id === reading.id ? null : currentReading
+      ));
+      setActionStatus(result.message);
+    } catch (requestError) {
+      setActionError(requestError.message || "Unable to delete this reading. Please try again.");
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -83,18 +138,32 @@ export default function Readings() {
       </section>
 
       <ReadingTable
+        actionError={actionError}
+        actionStatus={actionStatus}
+        deletingId={deletingId}
         error={error}
         isLoading={isLoading}
+        onDelete={handleReadingDeleted}
+        onEdit={(reading) => {
+          setActionError("");
+          setActionStatus("");
+          setEditingReading(reading);
+        }}
         onRetry={() => setReloadKey((key) => key + 1)}
         readings={filteredReadings}
       />
 
-      <ReadingForm
-        isLoadingReadings={isLoading}
-        loadError={error}
-        onReadingCreated={handleReadingCreated}
-        readings={readings}
-      />
+      <div ref={readingFormRef}>
+        <ReadingForm
+          editingReading={editingReading}
+          isLoadingReadings={isLoading}
+          loadError={error}
+          onCancelEdit={() => setEditingReading(null)}
+          onReadingCreated={handleReadingCreated}
+          onReadingUpdated={handleReadingUpdated}
+          readings={readings}
+        />
+      </div>
     </div>
   );
 }

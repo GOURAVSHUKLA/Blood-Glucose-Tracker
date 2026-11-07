@@ -18,9 +18,22 @@ function formatReadingDate(value) {
   });
 }
 
-export default function ReadingTable({ readings, isLoading, error, onRetry }) {
+export default function ReadingTable({
+  actionError,
+  actionStatus,
+  deletingId,
+  readings,
+  isLoading,
+  error,
+  onDelete,
+  onEdit,
+  onRetry,
+}) {
   return (
     <Card className="reading-list-card">
+      {actionError && <p className="form-error" role="alert">{actionError}</p>}
+      {actionStatus && <p className="form-message" role="status">{actionStatus}</p>}
+
       <div className="reading-list-heading">
         <div>
           <p className="eyebrow">Glucose history</p>
@@ -65,8 +78,8 @@ export default function ReadingTable({ readings, isLoading, error, onRetry }) {
                       <Button
                         aria-label={`Edit reading from ${formatReadingDate(reading.reading_date)}`}
                         className="table-action"
-                        disabled
-                        title="Editing will be enabled in Step 14."
+                        disabled={deletingId === reading.id}
+                        onClick={() => onEdit(reading)}
                         type="button"
                       >
                         Edit
@@ -74,11 +87,11 @@ export default function ReadingTable({ readings, isLoading, error, onRetry }) {
                       <Button
                         aria-label={`Delete reading from ${formatReadingDate(reading.reading_date)}`}
                         className="table-action"
-                        disabled
-                        title="Deleting will be enabled in Step 14."
+                        disabled={deletingId === reading.id}
+                        onClick={() => onDelete(reading)}
                         type="button"
                       >
-                        Delete
+                        {deletingId === reading.id ? "Deleting…" : "Delete"}
                       </Button>
                     </div>
                   </td>

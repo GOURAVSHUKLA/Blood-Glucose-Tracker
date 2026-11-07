@@ -3,8 +3,8 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import FeatureNotice from "../components/FeatureNotice.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { apiRequest } from "../services/api.js";
-import { storeAuthSession } from "../services/authSession.js";
 
 function getLoginErrorMessage(error) {
   const statusCode = error?.response?.status;
@@ -34,6 +34,7 @@ function getLoginErrorMessage(error) {
 }
 
 export default function Login() {
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
@@ -89,9 +90,15 @@ export default function Login() {
         },
       });
 
-      storeAuthSession(result?.token, result?.user);
+      login(result?.token, result?.user);
       setForm({ email: "", password: "" });
-      navigate("/dashboard", { replace: true });
+      const returnTo = location.state?.from;
+      navigate(
+        returnTo?.pathname
+          ? `${returnTo.pathname}${returnTo.search || ""}${returnTo.hash || ""}`
+          : "/dashboard",
+        { replace: true },
+      );
     } catch (error) {
       setSubmitError(getLoginErrorMessage(error));
     } finally {

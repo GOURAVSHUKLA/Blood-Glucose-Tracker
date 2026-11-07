@@ -1,21 +1,54 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import FeatureNotice from "../components/FeatureNotice.jsx";
+import { apiRequest } from "../services/api.js";
+import { storeAuthSession } from "../services/authSession.js";
+
+function getLoginErrorMessage(error) {
+  const statusCode = error?.response?.status;
+  const serverMessage = error?.response?.data?.error ?? error?.response?.data?.message;
+
+  if (statusCode === 400) {
+    return serverMessage || "Enter your email and password.";
+  }
+
+  if (statusCode === 401) {
+    return "Invalid email or password.";
+  }
+
+  if (statusCode === 503) {
+    return serverMessage || "The login service is not configured yet.";
+  }
+
+  if (typeof statusCode === "number" && statusCode >= 500) {
+    return serverMessage || "The server could not log you in. Please try again.";
+  }
+
+  if (error?.request && !error?.response) {
+    return "Could not reach the server. Check that the backend is running and try again.";
+  }
+
+  return error?.message || "Login failed. Please try again.";
+}
 
 export default function Login() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [status, setStatus] = useState("");
+  const [status, setStatus] = useState(location.state?.message || "");
+  const [submitError, setSubmitError] = useState("");
 
   function handleChange(event) {
     const { name, value } = event.target;
     setForm((currentForm) => ({ ...currentForm, [name]: value }));
     setErrors((currentErrors) => ({ ...currentErrors, [name]: "" }));
     setStatus("");
+    setSubmitError("");
   }
 
   function validateForm() {
@@ -40,6 +73,7 @@ export default function Login() {
     const nextErrors = validateForm();
     setErrors(nextErrors);
     setStatus("");
+    setSubmitError("");
 
     if (Object.keys(nextErrors).length > 0) {
       return;
@@ -47,8 +81,19 @@ export default function Login() {
 
     setIsSubmitting(true);
     try {
-      await new Promise((resolve) => window.setTimeout(resolve, 400));
-      setStatus("Your details are valid. Login will be connected to the backend in a later step.");
+      const result = await apiRequest("/auth/login", {
+        method: "POST",
+        data: {
+          email: form.email.trim(),
+          password: form.password,
+        },
+      });
+
+      storeAuthSession(result?.token, result?.user);
+      setForm({ email: "", password: "" });
+      navigate("/dashboard", { replace: true });
+    } catch (error) {
+      setSubmitError(getLoginErrorMessage(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -59,7 +104,7 @@ export default function Login() {
       <p className="eyebrow">Welcome back</p>
       <h1>Log in to Sweety</h1>
       <FeatureNotice>
-        This form currently validates your details locally. Backend login will be added in Step 8.
+        Sign in with the email and password associated with your Sweety account.
       </FeatureNotice>
 
       <form className="auth-form" onSubmit={handleSubmit} noValidate>
@@ -105,9 +150,10 @@ export default function Login() {
         </div>
 
         <Button className="auth-submit" disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Checking..." : "Log in"}
+          {isSubmitting ? "Logging in..." : "Log in"}
         </Button>
 
+        {submitError && <p className="form-error" role="alert">{submitError}</p>}
         {status && <p className="form-message" role="status">{status}</p>}
       </form>
 

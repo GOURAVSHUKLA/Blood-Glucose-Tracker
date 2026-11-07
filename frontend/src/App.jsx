@@ -1,4 +1,5 @@
-import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard.jsx";
 import Login from "./pages/Login.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -6,10 +7,25 @@ import Profile from "./pages/Profile.jsx";
 import Readings from "./pages/Readings.jsx";
 import Reports from "./pages/Reports.jsx";
 import Signup from "./pages/Signup.jsx";
+import { AUTH_SESSION_EXPIRED_EVENT } from "./services/authSession.js";
 
-export default function App() {
+function AppRoutes() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleExpiredSession() {
+      navigate("/login", {
+        replace: true,
+        state: { message: "Your session expired. Please log in again." },
+      });
+    }
+
+    window.addEventListener(AUTH_SESSION_EXPIRED_EVENT, handleExpiredSession);
+    return () => window.removeEventListener(AUTH_SESSION_EXPIRED_EVENT, handleExpiredSession);
+  }, [navigate]);
+
   return (
-    <BrowserRouter>
+    <>
       <header className="site-header">
         <Link className="brand" to="/">Sweety</Link>
         <nav className="site-nav" aria-label="Main navigation">
@@ -33,6 +49,14 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

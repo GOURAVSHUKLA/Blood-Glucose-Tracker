@@ -7,8 +7,8 @@ and a React/Vite frontend.
 
 - Node.js 20 or newer
 - npm
-- MongoDB (optional for starting the API; required when database-backed features
-  are implemented)
+- PostgreSQL
+- A configured `DATABASE_URL` in `backend/.env`
 
 ## Getting started
 
@@ -33,14 +33,13 @@ The API listens on `http://localhost:5000` by default and exposes
 
 ## API scaffold
 
+- `GET /api/health`
 - `POST /api/auth/signup` and `POST /api/auth/login`
 - `GET /api/readings` and `POST /api/readings`
 - `GET /api/reports`
 
-Feature endpoints currently return `501 Not Implemented`; they are route and
-controller placeholders, not completed authentication or glucose-reading
-functionality. The seed script is likewise a placeholder until data models are
-added.
+The backend includes the base health endpoint, protected auth and reading
+routes, and a PostgreSQL-ready schema for users and blood glucose readings.
 
 Run backend tests with `cd backend && npm test`.
 

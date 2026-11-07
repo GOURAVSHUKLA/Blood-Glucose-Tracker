@@ -8,7 +8,7 @@ export default function App() {
     <BrowserRouter>
       <header className="site-header">
         <Link className="brand" to="/">Sweety</Link>
-        <nav aria-label="Main navigation">
+        <nav className="site-nav" aria-label="Main navigation">
           <Link to="/login">Log in</Link>
           <Link to="/signup">Sign up</Link>
           <Link to="/dashboard">Dashboard</Link>
@@ -25,4 +25,3 @@ export default function App() {
     </BrowserRouter>
   );
 }
-

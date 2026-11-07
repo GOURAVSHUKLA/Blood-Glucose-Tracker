@@ -1,4 +1,6 @@
 import { apiRequest } from "../services/api.js";
+import Button from "../components/Button.jsx";
+import Card from "../components/Card.jsx";
 import FeatureNotice from "../components/FeatureNotice.jsx";
 
 export default function Dashboard() {
@@ -12,13 +14,13 @@ export default function Dashboard() {
   }
 
   return (
-    <section className="card">
+    <Card>
       <p className="eyebrow">Your health overview</p>
       <h1>Dashboard</h1>
       <FeatureNotice>
         Glucose readings and reports will appear here once those API features are implemented.
       </FeatureNotice>
-      <button type="button" onClick={checkApi}>Check API connection</button>
-    </section>
+      <Button type="button" onClick={checkApi}>Check API connection</Button>
+    </Card>
   );
 }

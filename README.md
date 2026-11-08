@@ -1,3 +1,78 @@
+🩸 Sweety – Blood Glucose Tracker
+
+Sweety is a full-stack Blood Glucose Tracking Application designed to help users record, manage, and monitor their blood glucose levels.
+
+The application provides a convenient platform for maintaining glucose reading history, tracking daily and monthly progress, and managing personal health records through an intuitive interface.
+
+🚀 Technology Stack
+
+Frontend
+
+* React.js
+* JavaScript
+* HTML5
+* CSS3
+
+Backend
+
+* Node.js
+* Express.js
+
+Database
+
+* PostgreSQL
+* pg (Node.js PostgreSQL Client)
+
+Authentication & Security
+
+* JWT (JSON Web Token)
+* bcrypt (Password Hashing)
+
+✨ Key Features
+
+* User Registration and Login
+* Secure Password Hashing
+* JWT-Based Authentication
+* Add Blood Glucose Readings
+* View Glucose Reading History
+* Update and Delete Readings
+* Daily Glucose Reports
+* Monthly Glucose Reports
+* Input Validation
+* Error Handling
+* Pagination for Efficient Data Retrieval
+* User-Specific Data Management
+
+🎯 Project Objectives
+
+* Simplify blood glucose record management.
+* Help users maintain historical glucose records.
+* Provide daily and monthly reading summaries.
+* Ensure secure authentication and data privacy.
+* Deliver an easy-to-use health tracking experience.
+
+🏗️ Architecture
+
+Sweety follows a full-stack architecture:
+
+* React.js handles the user interface.
+* Node.js and Express.js handle backend operations and REST APIs.
+* PostgreSQL stores user accounts and glucose readings.
+* JWT provides secure authentication.
+
+👨‍💻 Developer
+
+Gourav Shukla
+
+B.Tech – Computer Science and Engineering
+
+📌 Project Status
+
+Completed – Full-Stack Application
+
+Built as a practical project to demonstrate full-stack development, REST API development, database management, authentication, and frontend-backend integration.
+
+
 # Sweety — Blood Glucose Tracker
 
 Starter workspace for a blood glucose tracking application with an Express API

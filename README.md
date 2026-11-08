@@ -68,9 +68,14 @@ Run frontend component and route tests with `cd frontend && npm test`.
 The automated suites use mocked database queries and an in-process HTTP server;
 live registration and reading persistence require a configured PostgreSQL database.
 
-When updating an existing database to support separate morning and after-breakfast
-readings, export `DATABASE_URL` in your shell and run this migration once from the
-repository root:
+To create a fictional demo account with 670 synthetic glucose readings, run
+`cd backend && npm run seed`. Sign in with `demo@sweety.local` and
+`DemoPassword123!`. Each run replaces readings for this demo account; do not use
+the published demo password for a real account.
+
+The seed command applies the after-breakfast time-slot migration automatically.
+To update an existing database without seeding, export `DATABASE_URL` in your
+shell and run the migration from the repository root:
 
 ```sh
 psql "$DATABASE_URL" -f backend/database/migrations/001_add_after_breakfast_time_slot.sql

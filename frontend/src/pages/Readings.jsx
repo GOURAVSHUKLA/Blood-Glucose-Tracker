@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import Button from "../components/Button.jsx";
 import ReadingForm from "../components/ReadingForm.jsx";
 import ReadingTable from "../components/ReadingTable.jsx";
 import { apiRequest } from "../services/api.js";
@@ -145,27 +144,30 @@ export default function Readings() {
           <h2>Manage your readings</h2>
           <p>Review and filter the readings you have recorded.</p>
         </div>
-        <div className="readings-heading-actions">
-          <label className="date-picker">
-            <span>Filter by date</span>
-            <input
-              onChange={(event) => {
-                setFilterDate(event.target.value);
-                setCurrentPage(1);
-              }}
-              type="date"
-              value={filterDate}
-            />
-          </label>
-          <Button
-            className="secondary-button"
-            onClick={() => readingFormRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            type="button"
-          >
-            Add reading
-          </Button>
-        </div>
+        <label className="date-picker">
+          <span>Filter by date</span>
+          <input
+            onChange={(event) => {
+              setFilterDate(event.target.value);
+              setCurrentPage(1);
+            }}
+            type="date"
+            value={filterDate}
+          />
+        </label>
       </section>
+
+      <div id="reading-form" ref={readingFormRef}>
+        <ReadingForm
+          editingReading={editingReading}
+          isLoadingReadings={isLoading}
+          loadError={error}
+          onCancelEdit={() => setEditingReading(null)}
+          onReadingCreated={handleReadingCreated}
+          onReadingUpdated={handleReadingUpdated}
+          readings={readings}
+        />
+      </div>
 
       <ReadingTable
         actionError={actionError}
@@ -186,18 +188,6 @@ export default function Readings() {
         pageCount={pageCount}
         pageSize={READINGS_PER_PAGE}
       />
-
-      <div id="reading-form" ref={readingFormRef}>
-        <ReadingForm
-          editingReading={editingReading}
-          isLoadingReadings={isLoading}
-          loadError={error}
-          onCancelEdit={() => setEditingReading(null)}
-          onReadingCreated={handleReadingCreated}
-          onReadingUpdated={handleReadingUpdated}
-          readings={readings}
-        />
-      </div>
     </div>
   );
 }

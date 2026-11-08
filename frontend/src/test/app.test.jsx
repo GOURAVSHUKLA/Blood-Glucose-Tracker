@@ -279,6 +279,17 @@ describe("Reading management", () => {
     expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
   });
 
+  it("shows the add-reading form above the reading history", async () => {
+    apiRequest.mockResolvedValue([]);
+
+    render(<Readings />);
+
+    const formHeading = await screen.findByRole("heading", { name: "Add a glucose reading" });
+    const readingHeading = screen.getByRole("heading", { name: "Readings" });
+    expect(formHeading.compareDocumentPosition(readingHeading) & Node.DOCUMENT_POSITION_FOLLOWING)
+      .toBeTruthy();
+  });
+
   it("updates a reading and reflects the saved value", async () => {
     const user = userEvent.setup();
     const reading = {

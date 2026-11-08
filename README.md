@@ -40,7 +40,7 @@ The API listens on `http://localhost:5000` by default and exposes
 - `GET /api/health`
 - `POST /api/auth/signup` and `POST /api/auth/login`
 - `GET /api/readings`, `POST /api/readings`, `PUT /api/readings/:id`, and `DELETE /api/readings/:id`
-- `GET /api/reports`
+- `GET /api/reports?date=YYYY-MM-DD` for a selected-date report (defaults to today)
 
 Reading routes require authentication and only allow users to update or delete
 their own readings. The backend includes the base health endpoint, protected

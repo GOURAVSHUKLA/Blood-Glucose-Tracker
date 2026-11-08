@@ -59,6 +59,7 @@ auth and reading routes, and a PostgreSQL-ready schema for users and blood
 glucose readings.
 
 Run backend tests with `cd backend && npm test`.
+Run frontend component and route tests with `cd frontend && npm test`.
 
 When updating an existing database to support separate morning and after-breakfast
 readings, export `DATABASE_URL` in your shell and run this migration once from the

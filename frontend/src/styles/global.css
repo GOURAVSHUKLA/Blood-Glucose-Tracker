@@ -405,6 +405,8 @@ main {
 }
 
 .dashboard-main {
+  width: 100%;
+  min-width: 0;
   align-content: start;
   padding: clamp(1.25rem, 4vw, 3rem);
 }
@@ -814,6 +816,20 @@ h1 {
   text-align: center;
 }
 
+@media (max-width: 1100px) {
+  .dashboard-shell {
+    grid-template-columns: 13rem minmax(0, 1fr);
+  }
+
+  .dashboard-main {
+    padding: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 480px) {
   .site-header {
     align-items: flex-start;
@@ -831,6 +847,7 @@ h1 {
   }
 
   .sidebar {
+    min-width: 0;
     gap: 1rem;
     padding: 0.85rem 1rem;
     border-right: 0;
@@ -841,10 +858,13 @@ h1 {
     display: flex;
     gap: 0.35rem;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
   }
 
   .sidebar-link {
     flex: 0 0 auto;
+    min-height: 2.75rem;
     padding: 0.65rem 0.75rem;
     white-space: nowrap;
   }
@@ -853,16 +873,16 @@ h1 {
     display: none;
   }
 
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .report-chart-card-wide {
     grid-column: auto;
   }
 }
 
 @media (max-width: 520px) {
+  .dashboard-main {
+    padding: 1rem;
+  }
+
   .dashboard-intro,
   .dashboard-actions,
   .readings-page-heading {
@@ -879,6 +899,11 @@ h1 {
   .dashboard-account {
     width: 100%;
     justify-content: space-between;
+    gap: 0.65rem;
+  }
+
+  .dashboard-account-copy {
+    flex: 1 1 auto;
   }
 
   .stats-grid {
@@ -889,6 +914,40 @@ h1 {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .report-chart {
+    height: 16rem;
+  }
+
+  .reading-list-heading,
+  .recent-panel-heading {
+    align-items: flex-start;
+  }
+
+  .reading-table th,
+  .reading-table td {
+    padding: 0.7rem 0.55rem;
+  }
+
+  .reading-actions {
+    flex-wrap: wrap;
+  }
+
+  .reading-form-actions.is-editing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reading-form-actions.is-editing .button {
+    width: 100%;
+  }
+
+  .profile-actions .button {
+    width: 100%;
+  }
+
+  .dashboard-error {
+    padding: 0.8rem;
+  }
+
   .date-picker input {
     width: 100%;
   }
@@ -896,5 +955,24 @@ h1 {
   .dashboard-error {
     align-items: flex-start;
     flex-direction: column;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-navbar {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .dashboard-logout {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .card {
+    padding: 1.25rem;
+  }
+
+  .reading-table {
+    min-width: 30rem;
   }
 }

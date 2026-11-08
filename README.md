@@ -49,6 +49,10 @@ The protected profile page displays the signed-in user's name and email.
 Logging out clears the session token and stored user details before returning
 to the login page.
 
+The frontend uses CSS media queries to adapt the dashboard, navigation,
+statistics, forms, tables, and charts for desktop, laptop, tablet, and mobile
+screen widths.
+
 Reading routes require authentication and only allow users to update or delete
 their own readings. The backend includes the base health endpoint, protected
 auth and reading routes, and a PostgreSQL-ready schema for users and blood

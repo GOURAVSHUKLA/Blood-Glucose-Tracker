@@ -100,7 +100,7 @@ export default function Dashboard() {
               value={selectedDate}
             />
           </label>
-          <Button onClick={() => navigate("/readings")} type="button">
+          <Button onClick={() => navigate("/readings#reading-form")} type="button">
             Quick Add Reading
           </Button>
         </div>

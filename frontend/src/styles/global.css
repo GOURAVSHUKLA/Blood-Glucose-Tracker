@@ -1,23 +1,23 @@
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  color: #25254c;
-  background: #f7f7fc;
+  color: #273b49;
+  background: #f3f8f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
-  --color-brand: #5b52c8;
-  --color-brand-hover: #4940b2;
-  --color-heading: #25254c;
-  --color-text: #515a70;
-  --color-muted: #777f91;
-  --color-page: #f7f7fc;
+  --color-brand: #147d78;
+  --color-brand-hover: #0e6864;
+  --color-heading: #203744;
+  --color-text: #50636d;
+  --color-muted: #71818a;
+  --color-page: #f3f8f7;
   --color-surface: #fff;
-  --color-border: #e8eaf2;
-  --color-notice: #f5f6fc;
+  --color-border: #e0eae8;
+  --color-notice: #eff7f5;
   --space-page: clamp(1rem, 5vw, 4rem);
-  --radius-card: 1rem;
-  --radius-control: 0.5rem;
-  --shadow-card: 0 1rem 3rem rgb(35 43 75 / 6%);
+  --radius-card: 1.1rem;
+  --radius-control: 0.65rem;
+  --shadow-card: 0 0.8rem 2.2rem rgb(29 62 65 / 6%);
 }
 
 .readings-page {
@@ -196,6 +196,9 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  background:
+    radial-gradient(ellipse at 82% 0%, rgb(204 232 224 / 35%), transparent 34rem),
+    var(--color-page);
 }
 
 #root {
@@ -209,8 +212,10 @@ a {
 }
 
 a:focus-visible,
-button:focus-visible {
-  outline: 3px solid rgb(91 82 200 / 35%);
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgb(20 125 120 / 30%);
   outline-offset: 3px;
 }
 
@@ -228,6 +233,7 @@ button:focus-visible {
   color: var(--color-heading);
   font-size: 1.25rem;
   font-weight: 750;
+  letter-spacing: -0.035em;
   text-decoration: none;
 }
 
@@ -266,6 +272,9 @@ main {
 }
 
 .sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   gap: 2rem;
@@ -292,6 +301,7 @@ main {
   font-weight: 750;
   background: var(--color-brand);
   border-radius: 0.8rem;
+  box-shadow: 0 0.35rem 0.8rem rgb(20 125 120 / 20%);
 }
 
 .sidebar-brand-name,
@@ -317,6 +327,7 @@ main {
 
 .sidebar-link {
   padding: 0.75rem 0.85rem;
+  border-left: 3px solid transparent;
   color: var(--color-text);
   font-size: 0.95rem;
   font-weight: 550;
@@ -331,6 +342,7 @@ main {
 }
 
 .sidebar-link.is-active {
+  border-left-color: var(--color-brand);
   font-weight: 700;
 }
 
@@ -375,6 +387,20 @@ main {
   gap: 1rem;
 }
 
+.dashboard-account-avatar {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--color-brand);
+  font-size: 0.85rem;
+  font-weight: 750;
+  background: var(--color-notice);
+  border: 1px solid #d8ebe5;
+  border-radius: 50%;
+}
+
 .dashboard-account-copy {
   display: grid;
   min-width: 0;
@@ -409,6 +435,26 @@ main {
   min-width: 0;
   align-content: start;
   padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.dashboard-page,
+.readings-page {
+  animation: page-enter 220ms ease-out both;
+}
+
+.readings-heading-actions {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+}
+
+.readings-heading-actions .button {
+  min-height: 2.7rem;
+  white-space: nowrap;
+}
+
+#reading-form {
+  scroll-margin-top: 1.5rem;
 }
 
 .profile-card {
@@ -542,12 +588,24 @@ main {
 }
 
 .stat-card {
+  position: relative;
+  overflow: hidden;
   min-width: 0;
   padding: 1.25rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
+}
+
+.stat-card::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-brand), #9bcfc2);
+  content: "";
 }
 
 .stat-label,
@@ -676,6 +734,18 @@ main {
   box-shadow: var(--shadow-card);
 }
 
+.card,
+.recent-panel,
+.stat-card {
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+
+.card:hover,
+.recent-panel:hover,
+.stat-card:hover {
+  box-shadow: 0 1rem 2.6rem rgb(29 62 65 / 9%);
+}
+
 .eyebrow {
   color: var(--color-brand);
   font-size: 0.75rem;
@@ -697,6 +767,10 @@ h1 {
 }
 
 .button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
   padding: 0.7rem 1rem;
   color: #fff;
   font: inherit;
@@ -705,16 +779,19 @@ h1 {
   border: 0;
   border-radius: var(--radius-control);
   cursor: pointer;
-  transition: background-color 150ms ease;
+  transition: background-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
 }
 
 .button:hover {
   background: var(--color-brand-hover);
+  box-shadow: 0 0.35rem 0.8rem rgb(20 125 120 / 18%);
+  transform: translateY(-1px);
 }
 
 .button:disabled {
   cursor: not-allowed;
   opacity: 0.65;
+  transform: none;
 }
 
 .auth-card {
@@ -743,6 +820,7 @@ h1 {
 .form-field select {
   width: 100%;
   min-width: 0;
+  min-height: 3rem;
   padding: 0.75rem 0.85rem;
   color: var(--color-heading);
   font: inherit;
@@ -754,7 +832,7 @@ h1 {
 .form-field input:focus,
 .form-field select:focus {
   border-color: var(--color-brand);
-  outline: 3px solid rgb(91 82 200 / 15%);
+  outline: 3px solid rgb(20 125 120 / 13%);
 }
 
 .password-field {
@@ -847,11 +925,14 @@ h1 {
   }
 
   .sidebar {
+    z-index: 10;
+    height: auto;
     min-width: 0;
     gap: 1rem;
     padding: 0.85rem 1rem;
     border-right: 0;
     border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 0.25rem 1rem rgb(29 62 65 / 4%);
   }
 
   .sidebar-nav {
@@ -890,6 +971,18 @@ h1 {
     flex-direction: column;
   }
 
+  .readings-heading-actions {
+    align-items: stretch;
+  }
+
+  .readings-heading-actions .date-picker {
+    flex: 1 1 auto;
+  }
+
+  .readings-heading-actions .button {
+    align-self: flex-end;
+  }
+
   .dashboard-navbar {
     align-items: flex-start;
     flex-direction: column;
@@ -907,7 +1000,16 @@ h1 {
   }
 
   .stats-grid {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.7rem;
+  }
+
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-value {
+    font-size: clamp(1.3rem, 7vw, 1.75rem);
   }
 
   .report-charts {
@@ -974,5 +1076,32 @@ h1 {
 
   .reading-table {
     min-width: 30rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

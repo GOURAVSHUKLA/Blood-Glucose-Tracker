@@ -220,6 +220,36 @@ describe("Reading form", () => {
     });
     expect(screen.getByText("Reading saved successfully.", { exact: true })).toBeInTheDocument();
   });
+
+  it("shows existing readings for the selected date and prevents duplicate slots", async () => {
+    const user = userEvent.setup();
+    const readings = [{
+      id: 16,
+      reading_date: localDateValue(),
+      time_slot: "morning",
+      value: 110,
+    }];
+
+    render(
+      <MemoryRouter>
+        <ReadingForm
+          isLoadingReadings={false}
+          loadError=""
+          onReadingCreated={vi.fn()}
+          readings={readings}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("1 of 5 readings recorded for this date.")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Bedtime" })).toBeInTheDocument();
+    await user.selectOptions(screen.getByLabelText("Time slot"), "morning");
+    await user.type(screen.getByLabelText("Glucose value (mg/dL)"), "120");
+    await user.click(screen.getByRole("button", { name: "Save reading" }));
+
+    expect(screen.getByText("A reading already exists for this date and time slot.")).toBeInTheDocument();
+    expect(apiRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe("Dashboard", () => {

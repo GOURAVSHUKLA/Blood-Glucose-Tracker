@@ -8,7 +8,10 @@ const TIME_SLOTS = [
   { value: "after_breakfast", label: "After breakfast" },
   { value: "after_lunch", label: "After lunch" },
   { value: "after_dinner", label: "After dinner" },
+  { value: "bedtime", label: "Bedtime" },
 ];
+
+const MAX_READINGS_PER_DAY = TIME_SLOTS.length;
 
 const CANONICAL_TIME_SLOTS = {
   morning: "morning",
@@ -132,8 +135,8 @@ export default function ReadingForm({
         ),
       );
 
-      if (readingsForDate.length >= 4) {
-        nextErrors.timeSlot = "A maximum of four readings is allowed per day.";
+      if (readingsForDate.length >= MAX_READINGS_PER_DAY) {
+        nextErrors.timeSlot = `A maximum of ${MAX_READINGS_PER_DAY} readings is allowed per day.`;
       } else {
         const selectedSlot = CANONICAL_TIME_SLOTS[form.timeSlot];
         const duplicateSlot = readingsForDate.some(
@@ -197,10 +200,6 @@ export default function ReadingForm({
     (reading) => String(reading.reading_date).slice(0, 10) === form.readingDate,
   );
   const isBusy = isLoadingReadings || isSubmitting;
-  const availableTimeSlots = editingReading?.time_slot === "bedtime"
-    ? [...TIME_SLOTS, { value: "bedtime", label: "Bedtime" }]
-    : TIME_SLOTS;
-
   return (
     <Card className="reading-form-card">
       <div className="reading-form-heading">
@@ -217,7 +216,7 @@ export default function ReadingForm({
         <p className="reading-count" role="status">
           {isLoadingReadings
             ? "Checking existing readings…"
-            : `${readingsForSelectedDate.length} of 4 readings recorded for this date.`}
+            : `${readingsForSelectedDate.length} of ${MAX_READINGS_PER_DAY} readings recorded for this date.`}
         </p>
       )}
 
@@ -250,7 +249,7 @@ export default function ReadingForm({
             value={form.timeSlot}
           >
             <option value="">Choose a time slot</option>
-            {availableTimeSlots.map((slot) => (
+            {TIME_SLOTS.map((slot) => (
               <option key={slot.value} value={slot.value}>{slot.label}</option>
             ))}
           </select>

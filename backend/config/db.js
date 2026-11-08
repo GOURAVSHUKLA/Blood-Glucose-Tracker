@@ -3,6 +3,9 @@ import pg from "pg";
 
 const { Pool } = pg;
 
+// PostgreSQL DATE values are calendar dates, so keep them as strings instead of timezone-aware Date objects.
+pg.types.setTypeParser(1082, (value) => value);
+
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL || undefined
 });

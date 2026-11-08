@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import pg from "pg";
 import { connectDatabase, pool } from "../config/db.js";
+
+test("PostgreSQL DATE values remain date-only strings", () => {
+  const date = pg.types.getTypeParser(1082)("2026-11-08");
+
+  assert.equal(date, "2026-11-08");
+  assert.equal(JSON.stringify({ reading_date: date }), '{"reading_date":"2026-11-08"}');
+});
 
 test("database startup applies the schema and logs created and existing tables", async (t) => {
   const originalConnect = pool.connect;

@@ -73,6 +73,31 @@ Completed – Full-Stack Application
 Built as a practical project to demonstrate full-stack development, REST API development, database management, authentication, and frontend-backend integration.
 
 
+## 📸 Application Screenshots
+
+### 1. Dashboard
+![Dashboard](Screenshot/Dashboard.png)
+
+### 2. User Profile
+![Profile](Screenshot/Profile.png)
+
+### 3. Blood Glucose Readings
+![Readings](Screenshot/Readings.png)
+
+### 4. Reports & Analytics
+![Reports](Screenshot/Reports.png)
+
+
+
+
+
+
+
+
+
+
+
+
 # Sweety — Blood Glucose Tracker
 
 Starter workspace for a blood glucose tracking application with an Express API

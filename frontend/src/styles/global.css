@@ -409,6 +409,45 @@ main {
   padding: clamp(1.25rem, 4vw, 3rem);
 }
 
+.profile-card {
+  display: grid;
+  width: min(100%, 44rem);
+  gap: 1.5rem;
+}
+
+.profile-card h2 {
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.profile-details {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.profile-details > div {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.profile-details dt {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.profile-details dd {
+  margin: 0.35rem 0 0;
+  color: var(--color-heading);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.profile-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .dashboard-page {
   display: grid;
   width: min(100%, 70rem);

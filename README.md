@@ -22,6 +22,10 @@ cd ../frontend && npm install
 
 Copy `backend/.env.example` to `backend/.env` and set values as needed. To
 configure the frontend API URL, copy `frontend/.env.example` to `frontend/.env`.
+Create the PostgreSQL database named in `DATABASE_URL` before starting the API.
+On startup, the backend automatically creates the tables from
+`backend/database/schema.sql` if they are missing and prints whether each
+application table was created or already existed.
 The example points directly to the local API; without this file, the frontend
 uses `/api` through the Vite development proxy. `VITE_API_URL` is public
 frontend configuration, not a place for secrets. Start the API and frontend in

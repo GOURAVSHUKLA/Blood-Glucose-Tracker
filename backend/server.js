@@ -3,7 +3,7 @@ import "dotenv/config";
 import { connectDatabase, pool } from "./config/db.js";
 import app from "./app.js";
 
-const port = Number(process.env.PORT) || 5000;
+const port = Number(process.env.PORT) || 5001;
 
 try {
   const databaseReady = await connectDatabase();

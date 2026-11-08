@@ -3,7 +3,7 @@ import ReadingForm from "../components/ReadingForm.jsx";
 import ReadingTable from "../components/ReadingTable.jsx";
 import { apiRequest } from "../services/api.js";
 
-const READINGS_PER_PAGE = 10;
+const READINGS_PER_PAGE = 20;
 
 function sortReadings(readings) {
   return [...readings].sort((first, second) => {

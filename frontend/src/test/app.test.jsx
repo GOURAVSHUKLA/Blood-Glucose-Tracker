@@ -276,11 +276,11 @@ describe("Dashboard", () => {
 });
 
 describe("Reading management", () => {
-  it("shows ten readings per page and supports moving between pages", async () => {
+  it("shows twenty readings per page and supports moving between pages", async () => {
     const user = userEvent.setup();
-    const readings = Array.from({ length: 21 }, (_, index) => ({
+    const readings = Array.from({ length: 41 }, (_, index) => ({
       id: index + 1,
-      reading_date: `2025-06-${String(21 - index).padStart(2, "0")}`,
+      reading_date: new Date(Date.UTC(2025, 6, 11 - index)).toISOString().slice(0, 10),
       time_slot: "morning",
       value: 100 + index,
       created_at: "2025-06-15T08:00:00Z",
@@ -290,20 +290,21 @@ describe("Reading management", () => {
     render(<Readings />);
 
     const table = await screen.findByRole("table");
-    expect(within(table).getAllByRole("row")).toHaveLength(11);
-    expect(screen.getByText("Showing 1-10 of 21")).toBeInTheDocument();
-    expect(screen.queryByText("110", { exact: true })).not.toBeInTheDocument();
+    expect(within(table).getAllByRole("row")).toHaveLength(21);
+    expect(screen.getByText("Showing 1-20 of 41")).toBeInTheDocument();
+    expect(screen.queryByText("120", { exact: true })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Next" }));
 
-    expect(within(table).getAllByRole("row")).toHaveLength(11);
+    expect(within(table).getAllByRole("row")).toHaveLength(21);
     expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
-    expect(screen.getByText("Showing 11-20 of 21")).toBeInTheDocument();
-    expect(screen.getByText("110", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("Showing 21-40 of 41")).toBeInTheDocument();
+    expect(screen.getByText("120", { exact: true })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Next" }));
     expect(within(table).getAllByRole("row")).toHaveLength(2);
     expect(screen.getByText("Page 3 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Showing 41-41 of 41")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Previous" }));
     expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();

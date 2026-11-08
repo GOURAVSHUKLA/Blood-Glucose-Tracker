@@ -6,6 +6,7 @@ import {
   getStoredUser,
   storeAuthSession,
 } from "../services/authSession.js";
+import { getProfilePhoto, storeProfilePhoto } from "../services/profilePhoto.js";
 
 const AuthContext = createContext(null);
 
@@ -15,16 +16,24 @@ function getInitialUser() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(getInitialUser);
+  const [profilePhoto, setProfilePhoto] = useState(() => getProfilePhoto(getInitialUser()));
 
   const login = useCallback((token, nextUser) => {
     storeAuthSession(token, nextUser);
     setUser(nextUser);
+    setProfilePhoto(getProfilePhoto(nextUser));
   }, []);
 
   const logout = useCallback(() => {
     clearAuthSession();
     setUser(null);
+    setProfilePhoto(null);
   }, []);
+
+  const updateProfilePhoto = useCallback((photo) => {
+    storeProfilePhoto(user, photo);
+    setProfilePhoto(photo);
+  }, [user]);
 
   useEffect(() => {
     function handleExpiredSession() {
@@ -36,8 +45,15 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isAuthenticated: Boolean(user), login, logout }),
-    [user, login, logout],
+    () => ({
+      user,
+      profilePhoto,
+      isAuthenticated: Boolean(user),
+      login,
+      logout,
+      updateProfilePhoto,
+    }),
+    [user, profilePhoto, login, logout, updateProfilePhoto],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

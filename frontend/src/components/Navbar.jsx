@@ -1,5 +1,6 @@
 import { useLocation } from "react-router-dom";
 import Button from "./Button.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const pageTitles = {
@@ -11,14 +12,8 @@ const pageTitles = {
 
 export default function Navbar() {
   const { pathname } = useLocation();
-  const { logout, user } = useAuth();
+  const { logout, profilePhoto, user } = useAuth();
   const accountName = user?.name || "Your account";
-  const initials = accountName
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join("");
 
   return (
     <header className="dashboard-navbar">
@@ -28,7 +23,11 @@ export default function Navbar() {
       </div>
 
       <div className="dashboard-account">
-        <span className="dashboard-account-avatar" aria-hidden="true">{initials || "S"}</span>
+        <UserAvatar
+          className="dashboard-account-avatar"
+          name={accountName}
+          photo={profilePhoto}
+        />
         <div className="dashboard-account-copy">
           <span className="dashboard-account-name">{accountName}</span>
           <span className="dashboard-account-email">{user?.email || ""}</span>

@@ -406,6 +406,59 @@ describe("Reports and charts", () => {
 });
 
 describe("Protected routes", () => {
+  it("uploads and removes a profile photo for the signed-in user", async () => {
+    const user = userEvent.setup();
+    storeAuthSession("test-token", { id: 1, name: "Alex Doe", email: "alex@example.com" });
+
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/profile"
+              element={<ProtectedRoute><Profile /></ProtectedRoute>}
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const photo = new File(["fake image"], "profile.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("Choose profile photo"), photo);
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Profile photo updated.");
+    expect(window.localStorage.getItem("sweety.profile-photo.alex%40example.com"))
+      .toMatch(/^data:image\/png;base64,/);
+    expect(screen.getByRole("button", { name: "Remove photo" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Remove photo" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Profile photo removed.");
+    expect(window.localStorage.getItem("sweety.profile-photo.alex%40example.com")).toBeNull();
+  });
+
+  it("rejects unsupported profile photo files", async () => {
+    const user = userEvent.setup({ applyAccept: false });
+    storeAuthSession("test-token", { id: 1, name: "Alex Doe", email: "alex@example.com" });
+
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/profile"
+              element={<ProtectedRoute><Profile /></ProtectedRoute>}
+            />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    const file = new File(["plain text"], "not-an-image.txt", { type: "text/plain" });
+    await user.upload(screen.getByLabelText("Choose profile photo"), file);
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose a JPEG, PNG, or WebP image.");
+  });
+
   it("redirects unauthenticated users to login", async () => {
     render(
       <MemoryRouter initialEntries={["/private"]}>

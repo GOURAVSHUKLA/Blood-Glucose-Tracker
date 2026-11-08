@@ -428,6 +428,14 @@ main {
   border-radius: 50%;
 }
 
+.dashboard-account-avatar img,
+.profile-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
 .dashboard-account-copy {
   display: grid;
   min-width: 0;
@@ -493,6 +501,64 @@ main {
 .profile-card h2 {
   margin: 0;
   color: var(--color-heading);
+}
+
+.profile-photo-section {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  background: var(--color-notice);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+}
+
+.profile-photo-preview {
+  display: grid;
+  width: 6rem;
+  height: 6rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  place-items: center;
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 750;
+  background: var(--color-brand);
+  border: 3px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0.3rem 0.8rem rgb(29 62 65 / 14%);
+}
+
+.profile-photo-controls {
+  display: grid;
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.profile-photo-controls > strong {
+  color: var(--color-heading);
+}
+
+.profile-photo-controls > p {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.profile-photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
 }
 
 .profile-details {
@@ -1081,6 +1147,11 @@ h1 {
 
   .profile-actions .button {
     width: 100%;
+  }
+
+  .profile-photo-section {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .dashboard-error {

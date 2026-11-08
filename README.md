@@ -9,6 +9,7 @@ and a React/Vite frontend.
 - npm
 - PostgreSQL
 - A configured `DATABASE_URL` in `backend/.env`
+- A strong, configured `JWT_SECRET` in `backend/.env` for login and protected API requests
 
 ## Getting started
 
@@ -60,6 +61,8 @@ glucose readings.
 
 Run backend tests with `cd backend && npm test`.
 Run frontend component and route tests with `cd frontend && npm test`.
+The automated suites use mocked database queries and an in-process HTTP server;
+live registration and reading persistence require a configured PostgreSQL database.
 
 When updating an existing database to support separate morning and after-breakfast
 readings, export `DATABASE_URL` in your shell and run this migration once from the

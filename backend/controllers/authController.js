@@ -79,6 +79,10 @@ export async function login(req, res) {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
+  if (!process.env.JWT_SECRET) {
+    return res.status(503).json({ error: "Authentication is not configured yet" });
+  }
+
   if (!process.env.DATABASE_URL) {
     return res.status(503).json({ error: "Database is not configured yet" });
   }
@@ -104,7 +108,7 @@ export async function login(req, res) {
 
     const token = jwt.sign(
       { sub: user.id, email: user.email, name: user.name },
-      process.env.JWT_SECRET || "development-secret",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
@@ -117,4 +121,3 @@ export async function login(req, res) {
     return res.status(500).json({ error: "Unable to process login request" });
   }
 }
-

@@ -6,6 +6,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import Dashboard from "../pages/Dashboard.jsx";
 import Login from "../pages/Login.jsx";
+import Profile from "../pages/Profile.jsx";
+import Readings from "../pages/Readings.jsx";
+import Reports from "../pages/Reports.jsx";
 import Signup from "../pages/Signup.jsx";
 import ReadingForm from "../components/ReadingForm.jsx";
 import ProtectedRoute from "../components/ProtectedRoute.jsx";
@@ -14,6 +17,23 @@ import { storeAuthSession } from "../services/authSession.js";
 vi.mock("../services/api.js", () => ({
   apiRequest: vi.fn(),
 }));
+
+vi.mock("recharts", () => {
+  const Chart = ({ children }) => <div>{children}</div>;
+  const ChartElement = () => null;
+  return {
+    Bar: ChartElement,
+    BarChart: Chart,
+    CartesianGrid: ChartElement,
+    Legend: ChartElement,
+    Line: ChartElement,
+    LineChart: Chart,
+    ResponsiveContainer: Chart,
+    Tooltip: ChartElement,
+    XAxis: ChartElement,
+    YAxis: ChartElement,
+  };
+});
 
 function renderWithAuth(ui, { route = "/" } = {}) {
   return render(
@@ -34,6 +54,7 @@ function localDateValue() {
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
   window.sessionStorage.clear();
 });
@@ -82,6 +103,20 @@ describe("Login form", () => {
       name: "Alex Doe",
       email: "alex@example.com",
     });
+  });
+
+  it("shows a clear error when credentials are rejected", async () => {
+    const user = userEvent.setup();
+    apiRequest.mockRejectedValue({
+      response: { status: 401, data: { error: "Invalid email or password" } },
+    });
+    renderWithAuth(<Login />);
+
+    await user.type(screen.getByLabelText("Email"), "alex@example.com");
+    await user.type(screen.getByLabelText("Password"), "wrong-password");
+    await user.click(screen.getByRole("button", { name: "Log in" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email or password.");
   });
 });
 
@@ -210,6 +245,122 @@ describe("Dashboard", () => {
   });
 });
 
+describe("Reading management", () => {
+  it("updates a reading and reflects the saved value", async () => {
+    const user = userEvent.setup();
+    const reading = {
+      id: 21,
+      reading_date: "2025-06-15",
+      time_slot: "morning",
+      value: 100,
+      created_at: "2025-06-15T08:00:00Z",
+    };
+    const updatedReading = { ...reading, value: 125 };
+    apiRequest
+      .mockResolvedValueOnce([reading])
+      .mockResolvedValueOnce({ message: "Reading updated successfully.", reading: updatedReading });
+    Element.prototype.scrollIntoView = vi.fn();
+
+    render(<Readings />);
+
+    await user.click(await screen.findByRole("button", { name: /Edit reading/ }));
+    const valueInput = screen.getByLabelText("Glucose value (mg/dL)");
+    await user.clear(valueInput);
+    await user.type(valueInput, "125");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("Reading updated successfully.")).toBeInTheDocument();
+    expect(screen.getByText("125", { exact: true })).toBeInTheDocument();
+    expect(apiRequest).toHaveBeenLastCalledWith("/readings/21", {
+      method: "PUT",
+      data: {
+        reading_date: "2025-06-15",
+        time_slot: "morning",
+        value: 125,
+      },
+    });
+  });
+
+  it("confirms deletion, removes the reading, and reports success", async () => {
+    const user = userEvent.setup();
+    const reading = {
+      id: 22,
+      reading_date: "2025-06-15",
+      time_slot: "morning",
+      value: 100,
+      created_at: "2025-06-15T08:00:00Z",
+    };
+    apiRequest
+      .mockResolvedValueOnce([reading])
+      .mockResolvedValueOnce({ message: "Reading deleted successfully." });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+
+    render(<Readings />);
+
+    await user.click(await screen.findByRole("button", { name: /Delete reading/ }));
+
+    expect(window.confirm).toHaveBeenCalledOnce();
+    expect(await screen.findByText("Reading deleted successfully.")).toBeInTheDocument();
+    expect(screen.queryByText("100", { exact: true })).not.toBeInTheDocument();
+    expect(apiRequest).toHaveBeenLastCalledWith("/readings/22", { method: "DELETE" });
+  });
+});
+
+describe("Reports and charts", () => {
+  it("renders daily and month-to-date metrics with all chart sections", async () => {
+    const date = localDateValue();
+    const monthStart = `${date.slice(0, 7)}-01`;
+    apiRequest.mockResolvedValue({
+      date,
+      totalReadings: 1,
+      minValue: 110,
+      maxValue: 110,
+      averageValue: 110,
+      readings: [{ id: 1, reading_date: date, time_slot: "morning", value: 110 }],
+      monthToDate: {
+        startDate: monthStart,
+        endDate: date,
+        totalReadings: 1,
+        minValue: 110,
+        maxValue: 110,
+        averageValue: 110,
+        dailyReadings: [{
+          date,
+          totalReadings: 1,
+          minValue: 110,
+          maxValue: 110,
+          averageValue: 110,
+        }],
+      },
+      previousMonth: {
+        startDate: "2025-05-01",
+        endDate: "2025-05-31",
+        totalReadings: 0,
+        minValue: null,
+        maxValue: null,
+        averageValue: null,
+      },
+    });
+
+    render(<Reports />);
+
+    expect(await screen.findByText("Glucose reports")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Monthly glucose" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Selected-day glucose" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Reading trend" })).toBeInTheDocument();
+    expect(screen.getAllByText("Total readings", { exact: true })).toHaveLength(2);
+    expect(apiRequest).toHaveBeenCalledWith("/reports", { params: { date } });
+  });
+
+  it("shows a clear report error and retry action", async () => {
+    apiRequest.mockRejectedValueOnce(new Error("Report service unavailable."));
+    render(<Reports />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Report service unavailable.");
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+  });
+});
+
 describe("Protected routes", () => {
   it("redirects unauthenticated users to login", async () => {
     render(
@@ -249,5 +400,32 @@ describe("Protected routes", () => {
 
     expect(await screen.findByText("Private content")).toBeInTheDocument();
     expect(screen.queryByText("Login page")).not.toBeInTheDocument();
+  });
+
+  it("logs out, clears stored credentials, and redirects to login", async () => {
+    const user = userEvent.setup();
+    storeAuthSession("test-token", { id: 1, name: "Alex Doe", email: "alex@example.com" });
+
+    render(
+      <MemoryRouter initialEntries={["/profile"]}>
+        <AuthProvider>
+          <Routes>
+            <Route
+              path="/profile"
+              element={<ProtectedRoute><Profile /></ProtectedRoute>}
+            />
+            <Route path="/login" element={<p>Login page</p>} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Alex Doe")).toBeInTheDocument();
+    expect(screen.getByText("alex@example.com")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Log out" }));
+
+    expect(await screen.findByText("Login page")).toBeInTheDocument();
+    expect(window.sessionStorage.getItem("sweety.auth.token")).toBeNull();
+    expect(window.sessionStorage.getItem("sweety.auth.user")).toBeNull();
   });
 });

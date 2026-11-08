@@ -25,30 +25,59 @@ export async function getReport(req, res) {
          SELECT id, reading_date, time_slot, value, created_at
          FROM readings
          WHERE user_id = $1 AND reading_date = $2
+       ),
+       month_to_date_readings AS (
+         SELECT value
+         FROM readings
+         WHERE user_id = $1
+           AND reading_date >= date_trunc('month', $2::date)::date
+           AND reading_date <= $2
+       ),
+       month_to_date_summary AS (
+         SELECT
+           COUNT(*)::int AS total_readings,
+           MIN(value) AS min_value,
+           MAX(value) AS max_value,
+           ROUND(AVG(value), 2) AS average_value
+         FROM month_to_date_readings
        )
        SELECT
-         COUNT(*)::int AS total_readings,
-         MIN(value) AS min_value,
-         MAX(value) AS max_value,
-         ROUND(AVG(value), 2) AS average_value,
-         COALESCE(
-           json_agg(
-             json_build_object(
-               'id', id,
-               'reading_date', reading_date,
-               'time_slot', time_slot,
-               'value', value,
-               'created_at', created_at
-             )
-             ORDER BY created_at DESC
-           ) FILTER (WHERE id IS NOT NULL),
-           '[]'::json
-         ) AS readings
-       FROM daily_readings`,
+         daily_summary.total_readings,
+         daily_summary.min_value,
+         daily_summary.max_value,
+         daily_summary.average_value,
+         daily_summary.readings,
+         month_to_date_summary.total_readings AS month_total_readings,
+         month_to_date_summary.min_value AS month_min_value,
+         month_to_date_summary.max_value AS month_max_value,
+         month_to_date_summary.average_value AS month_average_value
+       FROM (
+         SELECT
+           COUNT(*)::int AS total_readings,
+           MIN(value) AS min_value,
+           MAX(value) AS max_value,
+           ROUND(AVG(value), 2) AS average_value,
+           COALESCE(
+             json_agg(
+               json_build_object(
+                 'id', id,
+                 'reading_date', reading_date,
+                 'time_slot', time_slot,
+                 'value', value,
+                 'created_at', created_at
+               )
+               ORDER BY created_at DESC
+             ) FILTER (WHERE id IS NOT NULL),
+             '[]'::json
+           ) AS readings
+         FROM daily_readings
+       ) AS daily_summary
+       CROSS JOIN month_to_date_summary`,
       [req.user.sub, date]
     );
 
     const report = result.rows[0];
+    const monthStartDate = `${date.slice(0, 7)}-01`;
 
     return res.status(200).json({
       date,
@@ -56,7 +85,17 @@ export async function getReport(req, res) {
       minValue: report.min_value === null ? null : Number(report.min_value),
       maxValue: report.max_value === null ? null : Number(report.max_value),
       averageValue: report.average_value === null ? null : Number(report.average_value),
-      readings: report.readings
+      readings: report.readings,
+      monthToDate: {
+        startDate: monthStartDate,
+        endDate: date,
+        totalReadings: Number(report.month_total_readings ?? 0),
+        minValue: report.month_min_value === null ? null : Number(report.month_min_value),
+        maxValue: report.month_max_value === null ? null : Number(report.month_max_value),
+        averageValue: report.month_average_value === null
+          ? null
+          : Number(report.month_average_value)
+      }
     });
   } catch (error) {
     console.error("Report generation error:", error);

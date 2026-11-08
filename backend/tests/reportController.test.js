@@ -30,8 +30,10 @@ test("daily report returns selected-date metrics and individual readings", async
   const originalQuery = pool.query;
   const originalDatabaseUrl = process.env.DATABASE_URL;
   let queryParameters;
+  let queryText;
   process.env.DATABASE_URL = "postgres://report-test";
-  pool.query = async (_query, parameters) => {
+  pool.query = async (query, parameters) => {
+    queryText = query;
     queryParameters = parameters;
     return {
       rows: [{
@@ -39,6 +41,10 @@ test("daily report returns selected-date metrics and individual readings", async
         min_value: "90",
         max_value: "140",
         average_value: "115.00",
+        month_total_readings: 8,
+        month_min_value: "80",
+        month_max_value: "190",
+        month_average_value: "123.75",
         readings: [
           { id: 2, time_slot: "after_breakfast", value: 140 },
           { id: 1, time_slot: "morning", value: 90 }
@@ -63,12 +69,22 @@ test("daily report returns selected-date metrics and individual readings", async
 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(queryParameters, [42, "2025-06-15"]);
+  assert.match(queryText, /date_trunc\('month', \$2::date\)/);
+  assert.match(queryText, /reading_date <= \$2/);
   assert.deepEqual(res.body, {
     date: "2025-06-15",
     totalReadings: 2,
     minValue: 90,
     maxValue: 140,
     averageValue: 115,
+    monthToDate: {
+      startDate: "2025-06-01",
+      endDate: "2025-06-15",
+      totalReadings: 8,
+      minValue: 80,
+      maxValue: 190,
+      averageValue: 123.75
+    },
     readings: [
       { id: 2, time_slot: "after_breakfast", value: 140 },
       { id: 1, time_slot: "morning", value: 90 }
@@ -86,6 +102,10 @@ test("daily report represents empty dates with no readings and null glucose metr
       min_value: null,
       max_value: null,
       average_value: null,
+      month_total_readings: 0,
+      month_min_value: null,
+      month_max_value: null,
+      month_average_value: null,
       readings: []
     }]
   });
@@ -111,6 +131,14 @@ test("daily report represents empty dates with no readings and null glucose metr
     minValue: null,
     maxValue: null,
     averageValue: null,
+    monthToDate: {
+      startDate: "2025-06-01",
+      endDate: "2025-06-15",
+      totalReadings: 0,
+      minValue: null,
+      maxValue: null,
+      averageValue: null
+    },
     readings: []
   });
 });

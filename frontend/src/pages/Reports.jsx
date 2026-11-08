@@ -48,9 +48,12 @@ export default function Reports() {
         if (
           result?.date !== selectedDate ||
           !Number.isInteger(result.totalReadings) ||
-          !Array.isArray(result.readings)
+          !Array.isArray(result.readings) ||
+          result?.monthToDate?.startDate !== `${selectedDate.slice(0, 7)}-01` ||
+          result.monthToDate.endDate !== selectedDate ||
+          !Number.isInteger(result.monthToDate.totalReadings)
         ) {
-          throw new Error("The API returned an unexpected report response.");
+          throw new Error("The API returned an unexpected daily report response.");
         }
         if (isMounted) {
           setReport(result);
@@ -74,6 +77,7 @@ export default function Reports() {
   }, [reloadKey, selectedDate]);
 
   const hasReadings = report?.totalReadings > 0;
+  const monthHasReadings = report?.monthToDate.totalReadings > 0;
   const reportReady = !isLoading && !error && report;
 
   return (
@@ -81,11 +85,9 @@ export default function Reports() {
       <section className="dashboard-intro">
         <div>
           <p className="eyebrow">Your glucose trends</p>
-          <h2>Daily report</h2>
+          <h2>Month-to-date report</h2>
           <p className="dashboard-description">
-            {selectedDate === today
-              ? "Review your readings for today."
-              : `Review your readings for ${formatReadingDate(selectedDate)}.`}
+            From the first day of the month through the selected date.
           </p>
         </div>
         <label className="date-picker">
@@ -108,7 +110,57 @@ export default function Reports() {
         </div>
       )}
 
-      <section className="stats-grid" aria-label="Daily glucose report">
+      <Card className="report-readings-card">
+        <div className="recent-panel-heading">
+          <div>
+            <p className="eyebrow">Month-to-date range</p>
+            <h2>
+              {reportReady
+                ? `${formatReadingDate(report.monthToDate.startDate)} – ${formatReadingDate(report.monthToDate.endDate)}`
+                : `${formatReadingDate(`${selectedDate.slice(0, 7)}-01`)} – ${formatReadingDate(selectedDate)}`}
+            </h2>
+          </div>
+          {reportReady && (
+            <span className="reading-result-count">
+              {report.monthToDate.totalReadings} {report.monthToDate.totalReadings === 1 ? "reading" : "readings"}
+            </span>
+          )}
+        </div>
+
+        <section className="stats-grid report-stats-grid" aria-label="Month-to-date glucose statistics">
+          <StatCard
+            label="Total readings"
+            value={reportReady ? report.monthToDate.totalReadings : "—"}
+            unit={reportReady ? "month to date" : ""}
+          />
+          <StatCard
+            label="Highest reading"
+            value={reportReady && monthHasReadings ? report.monthToDate.maxValue : "—"}
+            unit={reportReady && monthHasReadings ? "mg/dL" : ""}
+          />
+          <StatCard
+            label="Lowest reading"
+            value={reportReady && monthHasReadings ? report.monthToDate.minValue : "—"}
+            unit={reportReady && monthHasReadings ? "mg/dL" : ""}
+          />
+          <StatCard
+            label="Average reading"
+            value={reportReady && monthHasReadings
+              ? Number(report.monthToDate.averageValue).toFixed(2)
+              : "—"}
+            unit={reportReady && monthHasReadings ? "mg/dL" : ""}
+          />
+        </section>
+
+        {reportReady && !monthHasReadings && (
+          <div className="empty-readings">
+            <p>No readings for this date range.</p>
+            <span>Choose another date or add a reading to see your month-to-date report.</span>
+          </div>
+        )}
+      </Card>
+
+      <section className="stats-grid" aria-label="Selected-day glucose report">
         <StatCard
           label="Number of readings"
           value={reportReady ? report.totalReadings : "—"}

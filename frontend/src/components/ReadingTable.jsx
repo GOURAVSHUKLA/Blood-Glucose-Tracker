@@ -28,7 +28,14 @@ export default function ReadingTable({
   onDelete,
   onEdit,
   onRetry,
+  currentPage,
+  onPageChange,
+  pageCount,
+  pageSize,
 }) {
+  const firstVisibleReading = (currentPage - 1) * pageSize;
+  const visibleReadings = readings.slice(firstVisibleReading, firstVisibleReading + pageSize);
+
   return (
     <Card className="reading-list-card">
       {actionError && <p className="form-error" role="alert">{actionError}</p>}
@@ -57,49 +64,79 @@ export default function ReadingTable({
           <span>Add a reading or adjust the date filter.</span>
         </div>
       ) : (
-        <div className="reading-table-scroll">
-          <table className="reading-table">
-            <thead>
-              <tr>
-                <th scope="col">Date</th>
-                <th scope="col">Time slot</th>
-                <th scope="col">Glucose</th>
-                <th scope="col">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {readings.map((reading) => (
-                <tr key={reading.id}>
-                  <td>{formatReadingDate(reading.reading_date)}</td>
-                  <td>{TIME_SLOT_LABELS[reading.time_slot] || reading.time_slot}</td>
-                  <td className="reading-value">{reading.value} <span>mg/dL</span></td>
-                  <td>
-                    <div className="reading-actions">
-                      <Button
-                        aria-label={`Edit reading from ${formatReadingDate(reading.reading_date)}`}
-                        className="table-action"
-                        disabled={deletingId === reading.id}
-                        onClick={() => onEdit(reading)}
-                        type="button"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        aria-label={`Delete reading from ${formatReadingDate(reading.reading_date)}`}
-                        className="table-action"
-                        disabled={deletingId === reading.id}
-                        onClick={() => onDelete(reading)}
-                        type="button"
-                      >
-                        {deletingId === reading.id ? "Deleting…" : "Delete"}
-                      </Button>
-                    </div>
-                  </td>
+        <>
+          <div className="reading-table-scroll">
+            <table className="reading-table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Time slot</th>
+                  <th scope="col">Glucose</th>
+                  <th scope="col">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {visibleReadings.map((reading) => (
+                  <tr key={reading.id}>
+                    <td>{formatReadingDate(reading.reading_date)}</td>
+                    <td>{TIME_SLOT_LABELS[reading.time_slot] || reading.time_slot}</td>
+                    <td className="reading-value">{reading.value} <span>mg/dL</span></td>
+                    <td>
+                      <div className="reading-actions">
+                        <Button
+                          aria-label={`Edit reading from ${formatReadingDate(reading.reading_date)}`}
+                          className="table-action"
+                          disabled={deletingId === reading.id}
+                          onClick={() => onEdit(reading)}
+                          type="button"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          aria-label={`Delete reading from ${formatReadingDate(reading.reading_date)}`}
+                          className="table-action"
+                          disabled={deletingId === reading.id}
+                          onClick={() => onDelete(reading)}
+                          type="button"
+                        >
+                          {deletingId === reading.id ? "Deleting…" : "Delete"}
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {pageCount > 1 && (
+            <nav className="reading-pagination" aria-label="Reading pages">
+              <span className="reading-pagination-summary">
+                Showing {firstVisibleReading + 1}-{Math.min(firstVisibleReading + pageSize, readings.length)} of {readings.length}
+              </span>
+              <div className="reading-pagination-controls">
+                <Button
+                  className="secondary-button"
+                  disabled={currentPage === 1}
+                  onClick={() => onPageChange(currentPage - 1)}
+                  type="button"
+                >
+                  Previous
+                </Button>
+                <span aria-current="page" className="reading-page-indicator">
+                  Page {currentPage} of {pageCount}
+                </span>
+                <Button
+                  className="secondary-button"
+                  disabled={currentPage === pageCount}
+                  onClick={() => onPageChange(currentPage + 1)}
+                  type="button"
+                >
+                  Next
+                </Button>
+              </div>
+            </nav>
+          )}
+        </>
       )}
     </Card>
   );

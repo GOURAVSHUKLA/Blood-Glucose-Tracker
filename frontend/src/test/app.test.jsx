@@ -1,6 +1,6 @@
 import { AuthProvider } from "../context/AuthContext.jsx";
 import { apiRequest } from "../services/api.js";
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -246,6 +246,39 @@ describe("Dashboard", () => {
 });
 
 describe("Reading management", () => {
+  it("shows ten readings per page and supports moving between pages", async () => {
+    const user = userEvent.setup();
+    const readings = Array.from({ length: 21 }, (_, index) => ({
+      id: index + 1,
+      reading_date: `2025-06-${String(21 - index).padStart(2, "0")}`,
+      time_slot: "morning",
+      value: 100 + index,
+      created_at: "2025-06-15T08:00:00Z",
+    }));
+    apiRequest.mockResolvedValue(readings);
+
+    render(<Readings />);
+
+    const table = await screen.findByRole("table");
+    expect(within(table).getAllByRole("row")).toHaveLength(11);
+    expect(screen.getByText("Showing 1-10 of 21")).toBeInTheDocument();
+    expect(screen.queryByText("110", { exact: true })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+
+    expect(within(table).getAllByRole("row")).toHaveLength(11);
+    expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Showing 11-20 of 21")).toBeInTheDocument();
+    expect(screen.getByText("110", { exact: true })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(within(table).getAllByRole("row")).toHaveLength(2);
+    expect(screen.getByText("Page 3 of 3")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Previous" }));
+    expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
+  });
+
   it("updates a reading and reflects the saved value", async () => {
     const user = userEvent.setup();
     const reading = {

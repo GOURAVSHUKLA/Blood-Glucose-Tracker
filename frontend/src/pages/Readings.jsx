@@ -4,6 +4,8 @@ import ReadingForm from "../components/ReadingForm.jsx";
 import ReadingTable from "../components/ReadingTable.jsx";
 import { apiRequest } from "../services/api.js";
 
+const READINGS_PER_PAGE = 10;
+
 function sortReadings(readings) {
   return [...readings].sort((first, second) => {
     const dateOrder = String(second.reading_date)
@@ -19,6 +21,7 @@ function sortReadings(readings) {
 export default function Readings() {
   const [readings, setReadings] = useState([]);
   const [filterDate, setFilterDate] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -77,9 +80,17 @@ export default function Readings() {
       : readings,
     [filterDate, readings],
   );
+  const pageCount = Math.max(1, Math.ceil(filteredReadings.length / READINGS_PER_PAGE));
+
+  useEffect(() => {
+    if (currentPage > pageCount) {
+      setCurrentPage(pageCount);
+    }
+  }, [currentPage, pageCount]);
 
   function handleReadingCreated(reading) {
     setReadings((currentReadings) => sortReadings([...currentReadings, reading]));
+    setCurrentPage(1);
   }
 
   function handleReadingUpdated(reading, message) {
@@ -138,7 +149,10 @@ export default function Readings() {
           <label className="date-picker">
             <span>Filter by date</span>
             <input
-              onChange={(event) => setFilterDate(event.target.value)}
+              onChange={(event) => {
+                setFilterDate(event.target.value);
+                setCurrentPage(1);
+              }}
               type="date"
               value={filterDate}
             />
@@ -167,6 +181,10 @@ export default function Readings() {
         }}
         onRetry={() => setReloadKey((key) => key + 1)}
         readings={filteredReadings}
+        currentPage={Math.min(currentPage, pageCount)}
+        onPageChange={setCurrentPage}
+        pageCount={pageCount}
+        pageSize={READINGS_PER_PAGE}
       />
 
       <div id="reading-form" ref={readingFormRef}>

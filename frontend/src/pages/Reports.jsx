@@ -26,6 +26,14 @@ function formatTimeSlot(value) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function getPreviousMonthRange(date) {
+  const [year, month] = date.slice(0, 7).split("-").map(Number);
+  return {
+    startDate: new Date(Date.UTC(year, month - 2, 1)).toISOString().slice(0, 10),
+    endDate: new Date(Date.UTC(year, month - 1, 0)).toISOString().slice(0, 10),
+  };
+}
+
 export default function Reports() {
   const today = useMemo(() => getLocalDateValue(), []);
   const [selectedDate, setSelectedDate] = useState(today);
@@ -51,9 +59,12 @@ export default function Reports() {
           !Array.isArray(result.readings) ||
           result?.monthToDate?.startDate !== `${selectedDate.slice(0, 7)}-01` ||
           result.monthToDate.endDate !== selectedDate ||
-          !Number.isInteger(result.monthToDate.totalReadings)
+          !Number.isInteger(result.monthToDate.totalReadings) ||
+          !result.previousMonth?.startDate ||
+          !result.previousMonth?.endDate ||
+          !Number.isInteger(result.previousMonth.totalReadings)
         ) {
-          throw new Error("The API returned an unexpected daily report response.");
+          throw new Error("The API returned an unexpected report response.");
         }
         if (isMounted) {
           setReport(result);
@@ -78,16 +89,20 @@ export default function Reports() {
 
   const hasReadings = report?.totalReadings > 0;
   const monthHasReadings = report?.monthToDate.totalReadings > 0;
+  const previousMonthHasReadings = report?.previousMonth.totalReadings > 0;
   const reportReady = !isLoading && !error && report;
+  const previousMonthRange = reportReady
+    ? report.previousMonth
+    : getPreviousMonthRange(selectedDate);
 
   return (
     <div className="dashboard-page">
       <section className="dashboard-intro">
         <div>
           <p className="eyebrow">Your glucose trends</p>
-          <h2>Month-to-date report</h2>
+          <h2>Glucose reports</h2>
           <p className="dashboard-description">
-            From the first day of the month through the selected date.
+            Previous-month and month-to-date statistics for the selected date.
           </p>
         </div>
         <label className="date-picker">
@@ -109,6 +124,54 @@ export default function Reports() {
           </Button>
         </div>
       )}
+
+      <Card className="report-readings-card">
+        <div className="recent-panel-heading">
+          <div>
+            <p className="eyebrow">Previous full month</p>
+            <h2>
+              {`${formatReadingDate(previousMonthRange.startDate)} – ${formatReadingDate(previousMonthRange.endDate)}`}
+            </h2>
+          </div>
+          {reportReady && (
+            <span className="reading-result-count">
+              {report.previousMonth.totalReadings} {report.previousMonth.totalReadings === 1 ? "reading" : "readings"}
+            </span>
+          )}
+        </div>
+
+        <section className="stats-grid report-stats-grid" aria-label="Previous month glucose statistics">
+          <StatCard
+            label="Total readings"
+            value={reportReady ? report.previousMonth.totalReadings : "—"}
+            unit={reportReady ? "previous month" : ""}
+          />
+          <StatCard
+            label="Highest reading"
+            value={reportReady && previousMonthHasReadings ? report.previousMonth.maxValue : "—"}
+            unit={reportReady && previousMonthHasReadings ? "mg/dL" : ""}
+          />
+          <StatCard
+            label="Lowest reading"
+            value={reportReady && previousMonthHasReadings ? report.previousMonth.minValue : "—"}
+            unit={reportReady && previousMonthHasReadings ? "mg/dL" : ""}
+          />
+          <StatCard
+            label="Average reading"
+            value={reportReady && previousMonthHasReadings
+              ? Number(report.previousMonth.averageValue).toFixed(2)
+              : "—"}
+            unit={reportReady && previousMonthHasReadings ? "mg/dL" : ""}
+          />
+        </section>
+
+        {reportReady && !previousMonthHasReadings && (
+          <div className="empty-readings">
+            <p>No readings for the previous month.</p>
+            <span>Choose another date to view a different month’s report.</span>
+          </div>
+        )}
+      </Card>
 
       <Card className="report-readings-card">
         <div className="recent-panel-heading">

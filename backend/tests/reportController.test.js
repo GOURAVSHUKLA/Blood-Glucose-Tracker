@@ -45,6 +45,10 @@ test("daily report returns selected-date metrics and individual readings", async
         month_min_value: "80",
         month_max_value: "190",
         month_average_value: "123.75",
+        previous_month_total_readings: 15,
+        previous_month_min_value: "70",
+        previous_month_max_value: "210",
+        previous_month_average_value: "126.40",
         readings: [
           { id: 2, time_slot: "after_breakfast", value: 140 },
           { id: 1, time_slot: "morning", value: 90 }
@@ -71,6 +75,7 @@ test("daily report returns selected-date metrics and individual readings", async
   assert.deepEqual(queryParameters, [42, "2025-06-15"]);
   assert.match(queryText, /date_trunc\('month', \$2::date\)/);
   assert.match(queryText, /reading_date <= \$2/);
+  assert.match(queryText, /reading_date < date_trunc\('month', \$2::date\)::date/);
   assert.deepEqual(res.body, {
     date: "2025-06-15",
     totalReadings: 2,
@@ -84,6 +89,14 @@ test("daily report returns selected-date metrics and individual readings", async
       minValue: 80,
       maxValue: 190,
       averageValue: 123.75
+    },
+    previousMonth: {
+      startDate: "2025-05-01",
+      endDate: "2025-05-31",
+      totalReadings: 15,
+      minValue: 70,
+      maxValue: 210,
+      averageValue: 126.4
     },
     readings: [
       { id: 2, time_slot: "after_breakfast", value: 140 },
@@ -106,6 +119,10 @@ test("daily report represents empty dates with no readings and null glucose metr
       month_min_value: null,
       month_max_value: null,
       month_average_value: null,
+      previous_month_total_readings: 0,
+      previous_month_min_value: null,
+      previous_month_max_value: null,
+      previous_month_average_value: null,
       readings: []
     }]
   });
@@ -139,6 +156,61 @@ test("daily report represents empty dates with no readings and null glucose metr
       maxValue: null,
       averageValue: null
     },
+    previousMonth: {
+      startDate: "2025-05-01",
+      endDate: "2025-05-31",
+      totalReadings: 0,
+      minValue: null,
+      maxValue: null,
+      averageValue: null
+    },
     readings: []
+  });
+});
+
+test("previous month date range handles January selection", async (t) => {
+  const originalQuery = pool.query;
+  const originalDatabaseUrl = process.env.DATABASE_URL;
+  process.env.DATABASE_URL = "postgres://report-test";
+  pool.query = async () => ({
+    rows: [{
+      total_readings: 0,
+      min_value: null,
+      max_value: null,
+      average_value: null,
+      readings: [],
+      month_total_readings: 0,
+      month_min_value: null,
+      month_max_value: null,
+      month_average_value: null,
+      previous_month_total_readings: 0,
+      previous_month_min_value: null,
+      previous_month_max_value: null,
+      previous_month_average_value: null
+    }]
+  });
+  t.after(() => {
+    pool.query = originalQuery;
+    if (originalDatabaseUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDatabaseUrl;
+    }
+  });
+
+  const res = createResponse();
+  await getReport({
+    query: { date: "2025-01-05" },
+    user: { sub: 42 }
+  }, res);
+
+  assert.equal(res.statusCode, 200);
+  assert.deepEqual(res.body.previousMonth, {
+    startDate: "2024-12-01",
+    endDate: "2024-12-31",
+    totalReadings: 0,
+    minValue: null,
+    maxValue: null,
+    averageValue: null
   });
 });

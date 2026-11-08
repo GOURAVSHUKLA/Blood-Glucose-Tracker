@@ -40,6 +40,21 @@ export async function getReport(req, res) {
            MAX(value) AS max_value,
            ROUND(AVG(value), 2) AS average_value
          FROM month_to_date_readings
+       ),
+       previous_month_readings AS (
+         SELECT value
+         FROM readings
+         WHERE user_id = $1
+           AND reading_date >= (date_trunc('month', $2::date) - interval '1 month')::date
+           AND reading_date < date_trunc('month', $2::date)::date
+       ),
+       previous_month_summary AS (
+         SELECT
+           COUNT(*)::int AS total_readings,
+           MIN(value) AS min_value,
+           MAX(value) AS max_value,
+           ROUND(AVG(value), 2) AS average_value
+         FROM previous_month_readings
        )
        SELECT
          daily_summary.total_readings,
@@ -50,7 +65,11 @@ export async function getReport(req, res) {
          month_to_date_summary.total_readings AS month_total_readings,
          month_to_date_summary.min_value AS month_min_value,
          month_to_date_summary.max_value AS month_max_value,
-         month_to_date_summary.average_value AS month_average_value
+         month_to_date_summary.average_value AS month_average_value,
+         previous_month_summary.total_readings AS previous_month_total_readings,
+         previous_month_summary.min_value AS previous_month_min_value,
+         previous_month_summary.max_value AS previous_month_max_value,
+         previous_month_summary.average_value AS previous_month_average_value
        FROM (
          SELECT
            COUNT(*)::int AS total_readings,
@@ -72,12 +91,20 @@ export async function getReport(req, res) {
            ) AS readings
          FROM daily_readings
        ) AS daily_summary
-       CROSS JOIN month_to_date_summary`,
+       CROSS JOIN month_to_date_summary
+       CROSS JOIN previous_month_summary`,
       [req.user.sub, date]
     );
 
     const report = result.rows[0];
     const monthStartDate = `${date.slice(0, 7)}-01`;
+    const [year, month] = date.slice(0, 7).split("-").map(Number);
+    const previousMonthStartDate = new Date(Date.UTC(year, month - 2, 1))
+      .toISOString()
+      .slice(0, 10);
+    const previousMonthEndDate = new Date(Date.UTC(year, month - 1, 0))
+      .toISOString()
+      .slice(0, 10);
 
     return res.status(200).json({
       date,
@@ -95,6 +122,20 @@ export async function getReport(req, res) {
         averageValue: report.month_average_value === null
           ? null
           : Number(report.month_average_value)
+      },
+      previousMonth: {
+        startDate: previousMonthStartDate,
+        endDate: previousMonthEndDate,
+        totalReadings: Number(report.previous_month_total_readings ?? 0),
+        minValue: report.previous_month_min_value === null
+          ? null
+          : Number(report.previous_month_min_value),
+        maxValue: report.previous_month_max_value === null
+          ? null
+          : Number(report.previous_month_max_value),
+        averageValue: report.previous_month_average_value === null
+          ? null
+          : Number(report.previous_month_average_value)
       }
     });
   } catch (error) {

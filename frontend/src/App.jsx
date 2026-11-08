@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import ProtectedRoute, { PublicOnlyRoute } from "./components/ProtectedRoute.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
@@ -7,10 +7,11 @@ import Login from "./pages/Login.jsx";
 import NotFound from "./pages/NotFound.jsx";
 import Profile from "./pages/Profile.jsx";
 import Readings from "./pages/Readings.jsx";
-import Reports from "./pages/Reports.jsx";
 import Signup from "./pages/Signup.jsx";
 import DashboardLayout from "./layouts/DashboardLayout.jsx";
 import { AUTH_SESSION_EXPIRED_EVENT } from "./services/authSession.js";
+
+const Reports = lazy(() => import("./pages/Reports.jsx"));
 
 function AppRoutes() {
   const navigate = useNavigate();
@@ -52,7 +53,14 @@ function AppRoutes() {
         <Route element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/readings" element={<Readings />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route
+            path="/reports"
+            element={(
+              <Suspense fallback={<p className="dashboard-message" role="status">Loading reports…</p>}>
+                <Reports />
+              </Suspense>
+            )}
+          />
           <Route path="/profile" element={<Profile />} />
         </Route>
         <Route path="*" element={<main className="public-main"><NotFound /></main>} />

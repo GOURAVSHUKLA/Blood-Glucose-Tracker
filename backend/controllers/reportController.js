@@ -27,7 +27,7 @@ export async function getReport(req, res) {
          WHERE user_id = $1 AND reading_date = $2
        ),
        month_to_date_readings AS (
-         SELECT value
+         SELECT reading_date, value
          FROM readings
          WHERE user_id = $1
            AND reading_date >= date_trunc('month', $2::date)::date
@@ -40,6 +40,40 @@ export async function getReport(req, res) {
            MAX(value) AS max_value,
            ROUND(AVG(value), 2) AS average_value
          FROM month_to_date_readings
+       ),
+       month_daily_summary AS (
+         SELECT
+           reading_date,
+           COUNT(*)::int AS total_readings,
+           MIN(value) AS min_value,
+           MAX(value) AS max_value,
+           ROUND(AVG(value), 2) AS average_value
+         FROM month_to_date_readings
+         GROUP BY reading_date
+       ),
+       month_calendar AS (
+         SELECT generate_series(
+           date_trunc('month', $2::date)::date,
+           $2::date,
+           interval '1 day'
+         )::date AS reading_date
+       ),
+       month_daily_trend AS (
+         SELECT COALESCE(
+           json_agg(
+             json_build_object(
+               'date', month_calendar.reading_date,
+               'totalReadings', COALESCE(month_daily_summary.total_readings, 0),
+               'minValue', month_daily_summary.min_value,
+               'maxValue', month_daily_summary.max_value,
+               'averageValue', month_daily_summary.average_value
+             )
+             ORDER BY month_calendar.reading_date
+           ),
+           '[]'::json
+         ) AS daily_readings
+         FROM month_calendar
+         LEFT JOIN month_daily_summary USING (reading_date)
        ),
        previous_month_readings AS (
          SELECT value
@@ -66,6 +100,7 @@ export async function getReport(req, res) {
          month_to_date_summary.min_value AS month_min_value,
          month_to_date_summary.max_value AS month_max_value,
          month_to_date_summary.average_value AS month_average_value,
+         month_daily_trend.daily_readings AS month_daily_readings,
          previous_month_summary.total_readings AS previous_month_total_readings,
          previous_month_summary.min_value AS previous_month_min_value,
          previous_month_summary.max_value AS previous_month_max_value,
@@ -92,6 +127,7 @@ export async function getReport(req, res) {
          FROM daily_readings
        ) AS daily_summary
        CROSS JOIN month_to_date_summary
+       CROSS JOIN month_daily_trend
        CROSS JOIN previous_month_summary`,
       [req.user.sub, date]
     );
@@ -121,7 +157,8 @@ export async function getReport(req, res) {
         maxValue: report.month_max_value === null ? null : Number(report.month_max_value),
         averageValue: report.month_average_value === null
           ? null
-          : Number(report.month_average_value)
+          : Number(report.month_average_value),
+        dailyReadings: report.month_daily_readings
       },
       previousMonth: {
         startDate: previousMonthStartDate,

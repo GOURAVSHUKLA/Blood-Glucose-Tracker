@@ -3,6 +3,18 @@ import Button from "../components/Button.jsx";
 import Card from "../components/Card.jsx";
 import StatCard from "../components/StatCard.jsx";
 import { apiRequest } from "../services/api.js";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 function getLocalDateValue(date = new Date()) {
   const year = date.getFullYear();
@@ -24,6 +36,14 @@ function formatTimeSlot(value) {
   return String(value)
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatChartDate(value) {
+  const [year, month, day] = String(value).slice(0, 10).split("-").map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function getPreviousMonthRange(date) {
@@ -60,6 +80,7 @@ export default function Reports() {
           result?.monthToDate?.startDate !== `${selectedDate.slice(0, 7)}-01` ||
           result.monthToDate.endDate !== selectedDate ||
           !Number.isInteger(result.monthToDate.totalReadings) ||
+          !Array.isArray(result.monthToDate.dailyReadings) ||
           !result.previousMonth?.startDate ||
           !result.previousMonth?.endDate ||
           !Number.isInteger(result.previousMonth.totalReadings)
@@ -91,6 +112,21 @@ export default function Reports() {
   const monthHasReadings = report?.monthToDate.totalReadings > 0;
   const previousMonthHasReadings = report?.previousMonth.totalReadings > 0;
   const reportReady = !isLoading && !error && report;
+  const monthlyChartData = reportReady ? report.monthToDate.dailyReadings : [];
+  const dailyChartData = reportReady
+    ? report.readings.map((reading) => ({
+        slot: formatTimeSlot(reading.time_slot),
+        value: Number(reading.value),
+      }))
+    : [];
+  const readingTrendData = monthlyChartData.map((day) => ({
+    ...day,
+    chartDate: formatChartDate(day.date),
+  }));
+  const monthlyGlucoseData = monthlyChartData.map((day) => ({
+    ...day,
+    chartDate: formatChartDate(day.date),
+  }));
   const previousMonthRange = reportReady
     ? report.previousMonth
     : getPreviousMonthRange(selectedDate);
@@ -244,6 +280,146 @@ export default function Reports() {
           value={reportReady && hasReadings ? Number(report.averageValue).toFixed(2) : "—"}
           unit={reportReady && hasReadings ? "mg/dL" : ""}
         />
+      </section>
+
+      <section className="report-charts" aria-label="Glucose charts">
+        <Card className="report-chart-card report-chart-card-wide">
+          <div className="report-chart-heading">
+            <h2>Monthly glucose</h2>
+            <p>Daily average, high, and low through the selected date (mg/dL).</p>
+          </div>
+          {isLoading ? (
+            <p className="dashboard-message" role="status">Loading chart data…</p>
+          ) : error ? (
+            <p className="dashboard-message">Chart data could not be loaded.</p>
+          ) : !monthHasReadings ? (
+            <div className="empty-readings">
+              <p>No glucose values to chart this month.</p>
+              <span>Recorded readings will appear here.</span>
+            </div>
+          ) : (
+            <div className="report-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyGlucoseData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid stroke="#e8eaf2" strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="chartDate"
+                    interval="preserveStartEnd"
+                    minTickGap={18}
+                    tick={{ fill: "#777f91", fontSize: 12 }}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fill: "#777f91", fontSize: 12 }}
+                    width={48}
+                  />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    connectNulls={false}
+                    dataKey="averageValue"
+                    name="Average"
+                    stroke="#5b52c8"
+                    strokeWidth={2.5}
+                    type="monotone"
+                  />
+                  <Line
+                    connectNulls={false}
+                    dataKey="maxValue"
+                    name="Highest"
+                    stroke="#e27655"
+                    strokeWidth={2}
+                    type="monotone"
+                  />
+                  <Line
+                    connectNulls={false}
+                    dataKey="minValue"
+                    name="Lowest"
+                    stroke="#42a899"
+                    strokeWidth={2}
+                    type="monotone"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        <Card className="report-chart-card">
+          <div className="report-chart-heading">
+            <h2>Selected-day glucose</h2>
+            <p>Compare readings across time slots (mg/dL).</p>
+          </div>
+          {isLoading ? (
+            <p className="dashboard-message" role="status">Loading chart data…</p>
+          ) : error ? (
+            <p className="dashboard-message">Chart data could not be loaded.</p>
+          ) : dailyChartData.length === 0 ? (
+            <div className="empty-readings">
+              <p>No readings for this date.</p>
+              <span>Choose another date to see its glucose values.</span>
+            </div>
+          ) : (
+            <div className="report-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyChartData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid stroke="#e8eaf2" strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="slot"
+                    interval={0}
+                    tick={{ fill: "#777f91", fontSize: 11 }}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fill: "#777f91", fontSize: 12 }}
+                    width={48}
+                  />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#5b52c8" name="Glucose" radius={[5, 5, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
+
+        <Card className="report-chart-card">
+          <div className="report-chart-heading">
+            <h2>Reading trend</h2>
+            <p>Number of readings recorded each day this month.</p>
+          </div>
+          {isLoading ? (
+            <p className="dashboard-message" role="status">Loading chart data…</p>
+          ) : error ? (
+            <p className="dashboard-message">Chart data could not be loaded.</p>
+          ) : !monthHasReadings ? (
+            <div className="empty-readings">
+              <p>No readings to show this month.</p>
+              <span>Daily reading counts will appear here.</span>
+            </div>
+          ) : (
+            <div className="report-chart">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={readingTrendData} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+                  <CartesianGrid stroke="#e8eaf2" strokeDasharray="3 3" />
+                  <XAxis
+                    dataKey="chartDate"
+                    interval="preserveStartEnd"
+                    minTickGap={18}
+                    tick={{ fill: "#777f91", fontSize: 12 }}
+                  />
+                  <YAxis allowDecimals={false} tick={{ fill: "#777f91", fontSize: 12 }} width={36} />
+                  <Tooltip />
+                  <Bar
+                    dataKey="totalReadings"
+                    fill="#42a899"
+                    name="Readings"
+                    radius={[5, 5, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
       </section>
 
       <Card className="report-readings-card">

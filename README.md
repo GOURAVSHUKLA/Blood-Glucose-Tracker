@@ -42,6 +42,9 @@ The API listens on `http://localhost:5000` by default and exposes
 - `GET /api/readings`, `POST /api/readings`, `PUT /api/readings/:id`, and `DELETE /api/readings/:id`
 - `GET /api/reports?date=YYYY-MM-DD` for selected-day, month-to-date, and previous-month reports (date defaults to today)
 
+Reports include date-wise aggregates used by the Recharts monthly glucose and
+reading trend visualizations.
+
 Reading routes require authentication and only allow users to update or delete
 their own readings. The backend includes the base health endpoint, protected
 auth and reading routes, and a PostgreSQL-ready schema for users and blood

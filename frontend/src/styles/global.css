@@ -468,6 +468,38 @@ main {
   gap: 1rem;
 }
 
+.report-charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.report-chart-card {
+  min-width: 0;
+}
+
+.report-chart-card-wide {
+  grid-column: 1 / -1;
+}
+
+.report-chart-heading h2 {
+  margin: 0;
+  color: var(--color-heading);
+  font-size: 1.05rem;
+}
+
+.report-chart-heading p {
+  margin: 0.4rem 0 0;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+
+.report-chart {
+  width: 100%;
+  height: 18rem;
+  margin-top: 1rem;
+}
+
 .stat-card {
   min-width: 0;
   padding: 1.25rem;
@@ -785,6 +817,10 @@ h1 {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .report-chart-card-wide {
+    grid-column: auto;
+  }
 }
 
 @media (max-width: 520px) {
@@ -807,6 +843,10 @@ h1 {
   }
 
   .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .report-charts {
     grid-template-columns: minmax(0, 1fr);
   }
 

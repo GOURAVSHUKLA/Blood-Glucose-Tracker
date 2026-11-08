@@ -49,6 +49,22 @@ test("daily report returns selected-date metrics and individual readings", async
         previous_month_min_value: "70",
         previous_month_max_value: "210",
         previous_month_average_value: "126.40",
+        month_daily_readings: [
+          {
+            date: "2025-06-01",
+            totalReadings: 0,
+            minValue: null,
+            maxValue: null,
+            averageValue: null
+          },
+          {
+            date: "2025-06-02",
+            totalReadings: 2,
+            minValue: 90,
+            maxValue: 140,
+            averageValue: 115
+          }
+        ],
         readings: [
           { id: 2, time_slot: "after_breakfast", value: 140 },
           { id: 1, time_slot: "morning", value: 90 }
@@ -76,6 +92,7 @@ test("daily report returns selected-date metrics and individual readings", async
   assert.match(queryText, /date_trunc\('month', \$2::date\)/);
   assert.match(queryText, /reading_date <= \$2/);
   assert.match(queryText, /reading_date < date_trunc\('month', \$2::date\)::date/);
+  assert.match(queryText, /generate_series/);
   assert.deepEqual(res.body, {
     date: "2025-06-15",
     totalReadings: 2,
@@ -88,7 +105,23 @@ test("daily report returns selected-date metrics and individual readings", async
       totalReadings: 8,
       minValue: 80,
       maxValue: 190,
-      averageValue: 123.75
+      averageValue: 123.75,
+      dailyReadings: [
+        {
+          date: "2025-06-01",
+          totalReadings: 0,
+          minValue: null,
+          maxValue: null,
+          averageValue: null
+        },
+        {
+          date: "2025-06-02",
+          totalReadings: 2,
+          minValue: 90,
+          maxValue: 140,
+          averageValue: 115
+        }
+      ]
     },
     previousMonth: {
       startDate: "2025-05-01",
@@ -119,6 +152,7 @@ test("daily report represents empty dates with no readings and null glucose metr
       month_min_value: null,
       month_max_value: null,
       month_average_value: null,
+      month_daily_readings: [],
       previous_month_total_readings: 0,
       previous_month_min_value: null,
       previous_month_max_value: null,
@@ -154,7 +188,8 @@ test("daily report represents empty dates with no readings and null glucose metr
       totalReadings: 0,
       minValue: null,
       maxValue: null,
-      averageValue: null
+      averageValue: null,
+      dailyReadings: []
     },
     previousMonth: {
       startDate: "2025-05-01",
